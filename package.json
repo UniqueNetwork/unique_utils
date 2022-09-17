@@ -1,0 +1,57 @@
+{
+  "name": "@unique-nft/utils",
+  "version": "0.0.0",
+  "main": "index.js",
+  "description": "A tiny library to work with Substrate and Ethereum addresses and do some more",
+  "keywords": [
+    "Unique",
+    "NFT",
+    "address",
+    "base64",
+    "blockchain",
+    "Substrate",
+    "Ethereum",
+    "Polkadot",
+    "Kusama"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/UniqueNetwork/unique_utils"
+  },
+  "bugs": {
+    "url": "https://github.com/UniqueNetwork/unique_utils/issues"
+  },
+  "homepage": "https://github.com/UniqueNetwork/unique_utils#readme",
+  "scripts": {
+    "clean": "rimraf dist && mkdirp dist",
+    "build": "npm run clean && tsup --config configs/tsup.config.ts && npm run copy_files",
+    "copy_files": "cpy ./package.json ./README.md ./dist",
+    "esmon": "nodemon --exec \"esno\" ",
+    "patch": "npm run release -- -i patch --ci",
+    "release": "dotenv -e ./configs/.release.env -- release-it --config ./configs/.release-it.js --github.release",
+    "testrun": "vitest run",
+    "test": "vitest"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "devDependencies": {
+    "cpy-cli": "^4.2.0",
+    "dotenv": "^16.0.2",
+    "dotenv-cli": "^6.0.0",
+    "esno": "^0.16.3",
+    "mkdirp": "^1.0.4",
+    "nodemon": "^2.0.20",
+    "release-it": "^15.4.2",
+    "rimraf": "^3.0.2",
+    "tsup": "^6.2.3",
+    "typescript": "^4.8.3",
+    "vitest": "^0.23.2"
+  },
+  "dependencies": {
+    "@noble/hashes": "^1.1.2",
+    "base-x": "^4.0.0",
+    "utf-helpers": "^0.0.3"
+  }
+}
