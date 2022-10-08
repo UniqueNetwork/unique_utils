@@ -6,6 +6,7 @@ export default defineConfig([
       index: "src/index.ts",
       string: "src/StringUtils/index.ts",
       address: "src/Address/index.ts",
+      extension: "src/ExtensionTools/index.ts",
     },
     format: [
       "esm",

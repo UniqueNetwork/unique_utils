@@ -66,3 +66,200 @@ Utf16.lengthInBytes('👨🏼‍👩🏼‍👧🏼‍👧🏼') // 19
 ```
 
 **[Full documentation for the UTF and hex string helpers](https://github.com/fend25/utf-helpers#readme)**
+
+## Extension tools
+
+### Ethereum
+
+A tiny (0.5 Kb) and zero-dependency module to detect whether metamask extension presents,
+detect whether the access is granted and get account(s) or request access.
+
+Node.js-safe, it will not throw unexpected errors like "cannot find window".  
+Also, these methods are safe in a common way, they don't throw errors, 
+but return wrapped result or error with additional info.
+
+The `ExtensionsTools`, `Ethereum` and `Polkadot` modules should be imported directly from  
+`@unique-nft/utils/extension` because they are not available at `@unique-nft/utils`.
+
+For Ethereum browser extensions, like metamask:
+
+```ts
+import {ExtensionTools} from '@unique-nft/utils/extension'
+
+const Ethereum = ExtensionTools.Ethereum
+//or
+import {Ethereum} from '@unique-nft/utils/extension'
+
+const getAccountsResult = await Ethereum.getAccounts()
+/*
+{
+  accounts: ['0xf8cC75F76d46c3b1c5F270Fe06c8FFdeAB8E5eaB'],
+  info: {extensionFound: true, chainId: '0x22b2', chainIdNumber: 8882},
+  selectedAddress: 0xf8cC75F76d46c3b1c5F270Fe06c8FFdeAB8E5eaB
+}
+// or, when there is no granted account:
+{accounts: [], selectedAddress: null, info: {extensionFound: true, chainId: '0x22b2', chainIdNumber: 8882}}
+// or, when there is no extension:
+{accounts: [], selectedAddress: null, info: {extensionFound: false}}
+// in Node.js `info.extensionFound is` always false.
+*/
+```
+
+Simple example which just checks extension and tries to get an address without prompting user:
+
+```ts
+import {Ethereum} from '@unique-nft/utils/extension'
+
+let result = await Ethereum.getAccounts()
+
+if (result.info.extensionFound && result.selectedAddress) {
+  //woohoo, let's create a Web3 Provider like that:
+  const provider = new ethers.providers.Web3Provider(window.ethereum)
+  console.log(ethers.utils.formatEther(await provider.getBalance(result.selectedAddress)))
+}
+```
+
+More complex example, when we want to request user to grant access.  
+_Note: If user has already granted access, it will work silently, just like_ `getAccounts`.
+
+```ts
+import {Ethereum} from '@unique-nft/utils/extension'
+
+const result = await Ethereum.requestAccounts()
+
+if (result.selectedAddress) {
+  //woohoo, let's create a Web3 Provider like that:
+  const provider = new ethers.providers.Web3Provider(window.ethereum)
+  console.log(ethers.utils.formatEther(await provider.getBalance(result.selectedAddress)))
+} else {
+  if (result.info.userRejected) {
+    console.log(`Oops, user doesn't want us. Let's show them some kawaii popup`)
+  } else {
+    console.error(result.info.error)
+  }
+}
+```
+
+### Polkadot
+
+A tiny (1.5 Kb) and zero-dependency (no WASM, no anything) module to work with Polkadot extensions family - 
+Polkadot.js, Subwallet, Talisman and other Polkadot.js-compatible wallets.  
+Actually it's a neat and really useful replacement for the extension-dapp module.
+
+This module works in browsers with multiple wallets, it can detect whether there is an extension installed
+and contains the boilerplate logic around detecting wallets, it's access and so on.
+
+Node.js-safe, it will not throw unexpected errors like "cannot find window".  
+Also, these methods are safe in a common way, they don't throw errors,
+but return wrapped result or error with additional info.
+
+The `ExtensionsTools`, `Ethereum` and `Polkadot` modules should be imported directly  
+from `@unique-nft/utils/extension` because they are not available at `@unique-nft/utils`.
+
+```ts
+import {ExtensionTools} from '@unique-nft/utils/extension'
+//or
+import {Polkadot} from '@unique-nft/utils/extension'
+
+const result = await Polkadot.enableAndLoadAllWallets()
+
+result.info.extensionFound // boolean, in Node.js it's always false.
+
+result.accounts[0].address // string
+```
+
+Also, it contains ready signer object for the [Unique SDK](https://www.npmjs.com/package/@unique-nft/sdk):
+
+```ts
+import {Polkadot} from '@unique-nft/utils/extension'
+import {Sdk} from '@unique-nft/sdk'
+
+const {accounts} = await Polkadot.enableAndLoadAllWallets() // Some checks are omitted
+const account = accounts[0] // For the simplicity
+
+const sdk = new Sdk({
+  baseUrl: 'https://rest.opal.uniquenetwork.dev/v1',
+  signer: account.uniqueSdkSigner
+})
+
+// or provide it (or override default one) on demand with specific request:
+
+const sdkWithoutSigner = new Sdk({baseUrl: 'https://rest.opal.uniquenetwork.dev/v1'})
+
+const result = await sdkWithoutSigner.balance.transfer.submitWaitResult({
+  amount: 1,
+  address: account.address,
+  destination: "5..." // some another address
+}, {
+  signer: account.uniqueSdkSigner
+})
+```
+
+##### Return types
+
+`enableAndLoadAllWallets` and `loadEnabledWallets` return such result:
+
+```ts
+export interface IPolkadotExtensionLoadWalletsResult {
+  info: {
+    extensionFound: boolean
+    accountsFound: boolean
+    userHasWalletsButHasNoAccounts: boolean
+    userHasBlockedAllWallets: boolean
+  }
+
+  accounts: IPolkadotExtensionAccount[]
+  
+  wallets: IPolkadotExtensionWallet[]
+
+  rejectedWallets: Array<{
+    name: string
+    version: string
+    isEnabled: boolean | undefined
+    prettyName: string
+    logo: {
+      ipfsCid: string,
+      url: string,
+    }
+    error: Error
+    isBlockedByUser: boolean
+  }>
+}
+```
+
+where `IPolkadotExtensionAccount` is:
+
+```ts
+export interface IPolkadotExtensionAccount extends Omit<Signer, 'signRaw'> {
+  name: string
+  id: string
+  address: string
+  addressShort: string
+  
+  wallet: {
+    name: string
+    version: string
+    isEnabled: boolean | undefined
+    prettyName: string
+    logo: {
+      ipfsCid: string,
+      url: string,
+    }
+  }
+  
+  signRaw: (raw: SignerPayloadRawWithAddressAndTypeOptional | string) => Promise<SignerResult>
+  signPayload: (payload: SignerPayloadJSON) => Promise<SignerResult>
+  update?: (id: number, status: any) => void
+
+  uniqueSdkSigner: {
+    sign: (unsignedTxPayload: SDK_UnsignedTxPayloadBody) => Promise<SDK_SignTxResultResponse>
+  }
+
+  meta: {
+    genesisHash: string | null
+    name: string
+    source: string
+  }
+  type: KeypairType // 'ed25519' | 'sr25519' | 'ecdsa' | 'ethereum'
+}
+```
