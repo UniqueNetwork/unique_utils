@@ -31,8 +31,7 @@ Address consists some useful utilities for substrate and ethereum addresses proc
 - **[validate](#validate)**: set of validators, i.e. functions throwing an error when passed param is not a valid substrate address, ethereum address, nested address, etc.
 - **[collection](#collection)**: converters of collection id <-> collection ethereum address.
 - **[nesting](#nesting)**: converters of {collectionId, tokenId} <-> nested ethereum address.
-- **[to](#to)**: converters to CrossAccountId (boxed substrate/ethereum address) and other common converters.
-- **[extract](#extract)**: extractors of addresses with from CrossAccountId.
+- **[extract](#extract)**: tools to check and extract address in string form or CrossAccountId.
 - **[mirror](#mirror)**: converters of substrate and ethereum mirrors.
 - **[normalize](#normalize)**: address normalizers (substrate to 42 prefix and ethereum capitalizer).
 - **[compare](#compare)**: address comparators.
@@ -181,7 +180,7 @@ Address.is.tokenId([]) // false
 
 #### crossAccountId
 
-This method checks whether a specified argument is a valid Cross Account Id object.
+This method checks whether a specified argument is a valid CrossAccountId object.
 
 ``` ts
 crossAccountId: (obj: any) => boolean
@@ -204,7 +203,7 @@ Address.is.crossAccountId([]) // false
 
 #### crossAccountIdUncapitalized
 
-The method checks whether a Cross Account Id object is passed with uncapitalized property.
+The method checks whether a CrossAccountId object is passed with uncapitalized property.
 
 ``` ts
 crossAccountIdUncapitalized: (obj: any) => boolean
@@ -519,210 +518,142 @@ Address.nesting.idsToAddress([], 15) // throws the error
 Address.nesting.idsToAddress('id', []) // throws the error
 ```
 
-### to
-
-The object provides methods for converting Substrate or Ethereum address to an object or to a normalized format (prefix 42)
-
-#### crossAccountId
-
-The method accepts a Substrate or Ethereum address as a parameter and converts it to a Cross Account Id object.
-If a parameter is invalid, the method throws the error.
-
-``` ts
-crossAccountId: (address: string) => CrossAccountId
-```
-
-Examples:
-
-``` ts
-Address.to.crossAccountId('0x17c4E6453Cc49AAAaEACa894E6a9683e00000005')
-// {Ethereum: '0x17c4E6453Cc49AAAaEACa894E6a9683e00000005'}
-
-Address.to.crossAccountId('5HgvUDiRm5yjRSrrG9B6q6km7KLzkXMxvFLHPZpA13pmwCJQ')
-// {Substrate: '5HgvUDiRm5yjRSrrG9B6q6km7KLzkXMxvFLHPZpA13pmwCJQ'}
-
-Address.to.crossAccountId('5HgvUDiRm5yjRSrrG9B6q6km7KLzkXMxvFLHPZpA13pmwCJ') // throws the error
-Address.to.crossAccountId('0x17c4E6453Cc49AAAaEACa894E6a9683e0000000') // throws the error
-Address.to.crossAccountId(100) // throws the error
-Address.to.crossAccountId([])  // throws the error
-```
-
-#### crossAccountIdNormalized
-
-The method accepts a Substrate or Ethereum address as a parameter and converts it to an object with a normalized format (prefix 42).
-If a parameter is invalid, the method throws the error.
-
-In case of Substrate address, the method normalizes it (prefix 42). In case of Ethereum address, it capitalizes letters.
-
-``` ts
-crossAccountIdNormalized: (address: string) => CrossAccountId
-```
-
-Examples:
-
-``` ts
-Address.to.crossAccountIdNormalized('yGJMj5z32dpBUigGVFgatC382Ti3FNVSKyfgi87UF7f786MJL')
-// {Substrate: '5HgvUDiRm5yjRSrrG9B6q6km7KLzkXMxvFLHPZpA13pmwCJQ'}
-
-Address.to.crossAccountIdNormalized('0x17c4e6453cc49aaaaeaca894E6a9683e00000005')
-// {Ethereum: '0x17c4E6453cC49aAaaEACA894e6A9683e00000005'}
-
-Address.to.crossAccountIdNormalized('0x17c4E6453Cc49aaaaeaca894e6a9683e000000') // throws error 
-Address.to.crossAccountIdNormalized('address') // throws error
-Address.to.crossAccountIdNormalized(5) // throws error
-Address.to.crossAccountIdNormalized([]) // throws error
-```
-
-#### substrateNormalizedOrMirrorIfEthereum
-
-The method returns a normalized Substrate address, or a Substrate mirror if an Ethereum address is passed.
-
-``` ts
-substrateNormalizedOrMirrorIfEthereum: (address: string) => string
-```
-
-Examples:
-
-``` ts
-Address.to.substrateNormalizedOrMirrorIfEthereum('yGJMj5z32dpBUigGVFgatC382Ti3FNVSKyfgi87UF7f786MJL')
-// '5HgvUDiRm5yjRSrrG9B6q6km7KLzkXMxvFLHPZpA13pmwCJQ'
-
-Address.to.substrateNormalizedOrMirrorIfEthereum('0xf8cC75F76d46c3b1c5F270Fe06c8FFdeAB8E5eaB')
-// '5GwWnwbYRzwvcyAmQqCBB4h5JNspv8xPxpUm77wXbooxS3t5'
-
-Address.to.substrateNormalizedOrMirrorIfEthereum('yGJMjes32dpBUigGVFgatC382Ti3FNVSKyfgi87UF7f786MJL') // throws error 
-Address.to.substrateNormalizedOrMirrorIfEthereum('address') // throws the error
-Address.to.substrateNormalizedOrMirrorIfEthereum(55) // throws the error
-Address.to.substrateNormalizedOrMirrorIfEthereum([]) // throws the error
-```
-
 ### extract
 
-The object provides methods to get an address from an object.
+The object provides methods to get a validated Substrate or Ethereum address from string or CrossAccountId
+(capitalized or not, i.e. `{"Substrate": "..."}` and `{"substrate": "..."}` are both valid, same for Ethereum/ethereum).
 
-#### normalizedAddressFromObject
+#### address
+#### addressSafe
+#### addressNormalized
+#### addressNormalizedSafe
 
-The method returns an address (string) in the normalized format from an object or an address. If a conversion fails, the method throws an error.
+These methods return an address (string) from an object or an address.  
+Methods with suffix *Normalized return normalized address for Substrate and capitalized address for Ethereum address.  
+Safe methods return string or null, methods without *Safe suffix throw an error on incorrect input.
 
 ``` ts
-normalizedAddressFromObject: (address: string | object) => string
+address: (address: string | object) => string
+addressSafe: (address: string | object) => string
+addressNormalized: (address: string | object) => string
+addressNormalizedSafe: (address: string | object) => string
 ```
 
 Examples:
 
 ``` ts 
-Address.extract.normalizedAddressFromObject('yGJMj5z32dpBUigGVFgatC382Ti3FNVSKyfgi87UF7f786MJL')
+Address.extract.address('yGJMj5z32dpBUigGVFgatC382Ti3FNVSKyfgi87UF7f786MJL')
+Address.extract.addressSafe('yGJMj5z32dpBUigGVFgatC382Ti3FNVSKyfgi87UF7f786MJL')
+Address.extract.address({Substrate: 'yGJMj5z32dpBUigGVFgatC382Ti3FNVSKyfgi87UF7f786MJL'})
+Address.extract.address({substrate: 'yGJMj5z32dpBUigGVFgatC382Ti3FNVSKyfgi87UF7f786MJL'})
+Address.extract.addressSafe({Substrate: 'yGJMj5z32dpBUigGVFgatC382Ti3FNVSKyfgi87UF7f786MJL'})
+Address.extract.addressSafe({substrate: 'yGJMj5z32dpBUigGVFgatC382Ti3FNVSKyfgi87UF7f786MJL'})
+// 'yGJMj5z32dpBUigGVFgatC382Ti3FNVSKyfgi87UF7f786MJL'
+
+Address.extract.addressNormalized('yGJMj5z32dpBUigGVFgatC382Ti3FNVSKyfgi87UF7f786MJL')
+Address.extract.addressNormalized({Substrate: 'yGJMj5z32dpBUigGVFgatC382Ti3FNVSKyfgi87UF7f786MJL'})
+Address.extract.addressNormalized({substrate: 'yGJMj5z32dpBUigGVFgatC382Ti3FNVSKyfgi87UF7f786MJL'})
+Address.extract.addressNormalizedSafe('yGJMj5z32dpBUigGVFgatC382Ti3FNVSKyfgi87UF7f786MJL')
+Address.extract.addressNormalizedSafe({Substrate: 'yGJMj5z32dpBUigGVFgatC382Ti3FNVSKyfgi87UF7f786MJL'})
+Address.extract.addressNormalizedSafe({substrate: 'yGJMj5z32dpBUigGVFgatC382Ti3FNVSKyfgi87UF7f786MJL'})
 // '5HgvUDiRm5yjRSrrG9B6q6km7KLzkXMxvFLHPZpA13pmwCJQ'
 
-Address.extract.normalizedAddressFromObject({Substrate: 'yGJMj5z32dpBUigGVFgatC382Ti3FNVSKyfgi87UF7f786MJL'})
-// '5HgvUDiRm5yjRSrrG9B6q6km7KLzkXMxvFLHPZpA13pmwCJQ'
+Address.extract.address('0x17c4E6453Cc49aaaaeaca894E6a9683e00000005')
+Address.extract.address({Ethereum: '0x17c4E6453Cc49aaaaeaca894E6a9683e00000005'})
+Address.extract.address({ethereum: '0x17c4E6453Cc49aaaaeaca894E6a9683e00000005'})
+Address.extract.addressSafe('0x17c4E6453Cc49aaaaeaca894E6a9683e00000005')
+Address.extract.addressSafe({Ethereum: '0x17c4E6453Cc49aaaaeaca894E6a9683e00000005'})
+Address.extract.addressSafe({ethereum: '0x17c4E6453Cc49aaaaeaca894E6a9683e00000005'})
+// '0x17c4E6453Cc49aaaaeaca894E6a9683e00000005'
 
-Address.extract.normalizedAddressFromObject('0x17c4E6453Cc49aaaaeaca894E6a9683e00000005')
-// '0x17c4E6453cC49aAaaEACA894e6A9683e00000005'
+Address.extract.addressNormalized('0x17c4E6453Cc49aaaaeaca894E6a9683e00000005')
+Address.extract.addressNormalized({Ethereum: '0x17c4E6453Cc49aaaaeaca894E6a9683e00000005'})
+Address.extract.addressNormalized({ethereum: '0x17c4E6453Cc49aaaaeaca894E6a9683e00000005'})
+Address.extract.addressNormalizedSafe('0x17c4E6453Cc49aaaaeaca894E6a9683e00000005')
+Address.extract.addressNormalizedSafe({Ethereum: '0x17c4E6453Cc49aaaaeaca894E6a9683e00000005'})
+Address.extract.addressNormalizedSafe({ethereum: '0x17c4E6453Cc49aaaaeaca894E6a9683e00000005'})
+// '0x17c4E6453Cc49aaaaeaca894E6a9683e00000005'
 
-Address.extract.normalizedAddressFromObject({Ethereum: '0x17c4E6453cC49aAaaeaca894e6A9683e00000005'})
-// '0x17c4E6453cC49aAaaEACA894e6A9683e00000005'
+Address.extract.crossAccountId('yGJMj5z32dpBUigGVFgatC382Ti3FNVSKyfgi87UF7f786MJL')
+Address.extract.crossAccountId('yGJMj5z32dpBUigGVFgatC382Ti3FNVSKyfgi87UF7f786MJL')
+Address.extract.crossAccountId({Substrate: 'yGJMj5z32dpBUigGVFgatC382Ti3FNVSKyfgi87UF7f786MJL'})
+Address.extract.crossAccountIdSafe({substrate: 'yGJMj5z32dpBUigGVFgatC382Ti3FNVSKyfgi87UF7f786MJL'})
+Address.extract.crossAccountIdSafe({Substrate: 'yGJMj5z32dpBUigGVFgatC382Ti3FNVSKyfgi87UF7f786MJL'})
+Address.extract.crossAccountIdSafe({substrate: 'yGJMj5z32dpBUigGVFgatC382Ti3FNVSKyfgi87UF7f786MJL'})
+// {Substrate: 'yGJMj5z32dpBUigGVFgatC382Ti3FNVSKyfgi87UF7f786MJL'}
 
-Address.extract.normalizedAddressFromObject('yGJMj5z32dpBUigGVFgatC382Gi3FNVSKyfgi87UF7f786MJL') // throws the error
-// invalid address
+Address.extract.crossAccountIdNormalized('yGJMj5z32dpBUigGVFgatC382Ti3FNVSKyfgi87UF7f786MJL')
+Address.extract.crossAccountIdNormalized('yGJMj5z32dpBUigGVFgatC382Ti3FNVSKyfgi87UF7f786MJL')
+Address.extract.crossAccountIdNormalized({Substrate: 'yGJMj5z32dpBUigGVFgatC382Ti3FNVSKyfgi87UF7f786MJL'})
+Address.extract.crossAccountIdNormalizedSafe({substrate: 'yGJMj5z32dpBUigGVFgatC382Ti3FNVSKyfgi87UF7f786MJL'})
+Address.extract.crossAccountIdNormalizedSafe({Substrate: 'yGJMj5z32dpBUigGVFgatC382Ti3FNVSKyfgi87UF7f786MJL'})
+Address.extract.crossAccountIdNormalizedSafe({substrate: 'yGJMj5z32dpBUigGVFgatC382Ti3FNVSKyfgi87UF7f786MJL'})
+// {Substrate: '5HgvUDiRm5yjRSrrG9B6q6km7KLzkXMxvFLHPZpA13pmwCJQ'}
 
-Address.extract.normalizedAddressFromObject(11) // throws the error
-Address.extract.normalizedAddressFromObject('511') // throws the error
-Address.extract.normalizedAddressFromObject([]) // throws the error
+Address.extract.crossAccountId('0x17c4E6453Cc49aaaaeaca894E6a9683e00000005')
+Address.extract.crossAccountId({Ethereum: '0x17c4E6453Cc49aaaaeaca894E6a9683e00000005'})
+Address.extract.crossAccountId({ethereum: '0x17c4E6453Cc49aaaaeaca894E6a9683e00000005'})
+Address.extract.crossAccountIdSafe('0x17c4E6453Cc49aaaaeaca894E6a9683e00000005')
+Address.extract.crossAccountIdSafe({Ethereum: '0x17c4E6453Cc49aaaaeaca894E6a9683e00000005'})
+Address.extract.crossAccountIdSafe({ethereum: '0x17c4E6453Cc49aaaaeaca894E6a9683e00000005'})
+// {Ethereum: '0x17c4E6453Cc49aaaaeaca894E6a9683e00000005'}
+
+Address.extract.crossAccountIdNormalized('0x17c4E6453Cc49aaaaeaca894E6a9683e00000005')
+Address.extract.crossAccountIdNormalized({Ethereum: '0x17c4E6453Cc49aaaaeaca894E6a9683e00000005'})
+Address.extract.crossAccountIdNormalized({ethereum: '0x17c4E6453Cc49aaaaeaca894E6a9683e00000005'})
+Address.extract.crossAccountIdNormalizedSafe('0x17c4E6453Cc49aaaaeaca894E6a9683e00000005')
+Address.extract.crossAccountIdNormalizedSafe({Ethereum: '0x17c4E6453Cc49aaaaeaca894E6a9683e00000005'})
+Address.extract.crossAccountIdNormalizedSafe({ethereum: '0x17c4E6453Cc49aaaaeaca894E6a9683e00000005'})
+// {Ethereum: '0x17c4E6453Cc49aaaaeaca894E6a9683e00000005'}
 ```
 
-#### normalizedAddressFromObjectSafe
+#### substrateOrMirrorIfEthereum
+#### substrateOrMirrorIfEthereumNormalized
 
-The method returns an address (string) in the normalized format from an object or an address. The method does not throw an error. If conversion fails, a `null` object is returned.
+The methods return a Substrate address, or a Substrate mirror if an Ethereum address is passed.  
+Input: address or CrossAccountId  
+Output: substrate address, for ethereum address input it's always normalized
 
 ``` ts
-normalizedAddressFromObjectSafe: (address: string | object) => string | null
+substrateOrMirrorIfEthereum: (address: string | object) => string
+substrateOrMirrorIfEthereumNormalized: (address: string | object) => string
 ```
 
 Examples:
 
 ``` ts
-Address.extract.normalizedAddressFromObjectSafe('yGJMj5z32dpBUigGVFgatC382Ti3FNVSKyfgi87UF7f786MJL')
-// '5HgvUDiRm5yjRSrrG9B6q6km7KLzkXMxvFLHPZpA13pmwCJQ'
+Address.extract.substrateOrMirrorIfEthereum('yGGUrFj1wrgxk9VdjNGFRHcLLXRmtXVBkfmBpZUxQh9WNkGwy')
+Address.extract.substrateOrMirrorIfEthereum({Substrate: 'yGGUrFj1wrgxk9VdjNGFRHcLLXRmtXVBkfmBpZUxQh9WNkGwy'})
+Address.extract.substrateOrMirrorIfEthereum({substrate: 'yGGUrFj1wrgxk9VdjNGFRHcLLXRmtXVBkfmBpZUxQh9WNkGwy'})
+Address.extract.substrateOrMirrorIfEthereumSafe('yGGUrFj1wrgxk9VdjNGFRHcLLXRmtXVBkfmBpZUxQh9WNkGwy')
+Address.extract.substrateOrMirrorIfEthereumSafe({Substrate: 'yGGUrFj1wrgxk9VdjNGFRHcLLXRmtXVBkfmBpZUxQh9WNkGwy'})
+Address.extract.substrateOrMirrorIfEthereumSafe({substrate: 'yGGUrFj1wrgxk9VdjNGFRHcLLXRmtXVBkfmBpZUxQh9WNkGwy'})
+// 'yGGUrFj1wrgxk9VdjNGFRHcLLXRmtXVBkfmBpZUxQh9WNkGwy'
 
-Address.extract.normalizedAddressFromObjectSafe({Substrate: 'yGJMj5z32dpBUigGVFgatC382Ti3FNVSKyfgi87UF7f786MJL'})
-// '5HgvUDiRm5yjRSrrG9B6q6km7KLzkXMxvFLHPZpA13pmwCJQ'
+Address.extract.substrateOrMirrorIfEthereumNormalized('yGGUrFj1wrgxk9VdjNGFRHcLLXRmtXVBkfmBpZUxQh9WNkGwy')
+Address.extract.substrateOrMirrorIfEthereumNormalized({substrate: 'yGGUrFj1wrgxk9VdjNGFRHcLLXRmtXVBkfmBpZUxQh9WNkGwy'})
+Address.extract.substrateOrMirrorIfEthereumNormalized({Substrate: 'yGGUrFj1wrgxk9VdjNGFRHcLLXRmtXVBkfmBpZUxQh9WNkGwy'})
+Address.extract.substrateOrMirrorIfEthereumNormalizedSafe('yGGUrFj1wrgxk9VdjNGFRHcLLXRmtXVBkfmBpZUxQh9WNkGwy')
+Address.extract.substrateOrMirrorIfEthereumNormalizedSafe({Substrate: 'yGGUrFj1wrgxk9VdjNGFRHcLLXRmtXVBkfmBpZUxQh9WNkGwy'})
+Address.extract.substrateOrMirrorIfEthereumNormalizedSafe({substrate: 'yGGUrFj1wrgxk9VdjNGFRHcLLXRmtXVBkfmBpZUxQh9WNkGwy'})
+Address.extract.substrateOrMirrorIfEthereum('5Fp3dxhLyxkzrGE6Niqdvfy5B35duX7PcLqPpwJKaYE2bHah')
+Address.extract.substrateOrMirrorIfEthereum({Substrate: '5Fp3dxhLyxkzrGE6Niqdvfy5B35duX7PcLqPpwJKaYE2bHah'})
+Address.extract.substrateOrMirrorIfEthereum({substrate: '5Fp3dxhLyxkzrGE6Niqdvfy5B35duX7PcLqPpwJKaYE2bHah'})
+Address.extract.substrateOrMirrorIfEthereumNormalized('5Fp3dxhLyxkzrGE6Niqdvfy5B35duX7PcLqPpwJKaYE2bHah')
+Address.extract.substrateOrMirrorIfEthereumNormalized({Substrate: '5Fp3dxhLyxkzrGE6Niqdvfy5B35duX7PcLqPpwJKaYE2bHah'})
+Address.extract.substrateOrMirrorIfEthereumNormalized({substrate: '5Fp3dxhLyxkzrGE6Niqdvfy5B35duX7PcLqPpwJKaYE2bHah'})
+Address.extract.substrateOrMirrorIfEthereum('0x17c4E6453Cc49aaaaeaca894E6a9683e00000005')
+Address.extract.substrateOrMirrorIfEthereum({Ethereum: '0x17c4E6453Cc49aaaaeaca894E6a9683e00000005'})
+Address.extract.substrateOrMirrorIfEthereum({ethereum: '0x17c4E6453Cc49aaaaeaca894E6a9683e00000005'})
+// '5Fp3dxhLyxkzrGE6Niqdvfy5B35duX7PcLqPpwJKaYE2bHah'
 
-Address.extract.normalizedAddressFromObjectSafe('0x17c4E6453Cc49aaaaeaca894E6a9683e00000005')
-// '0x17c4E6453cC49aAaaEACA894e6A9683e00000005'
-
-Address.extract.normalizedAddressFromObjectSafe({Ethereum: '0x17c4E6453cC49aAaaeaca894e6A9683e00000005'})
-// '0x17c4E6453cC49aAaaEACA894e6A9683e00000005'
-
-Address.extract.normalizedAddressFromObjectSafe('yGJMj5z32dpBUigGVFgatC382Gi3FNVSKyfgi87UF7f786MJL')
-// null 
-
-Address.extract.normalizedAddressFromObjectSafe(50) // null 
-Address.extract.normalizedAddressFromObjectSafe('id') // null 
-Address.extract.normalizedAddressFromObjectSafe([]) // null 
+Address.to.substrateOrMirrorIfEthereum('yGJMjes32dpBUigGVFgatC382Ti3FNVSKyfgi87UF7f786MJL') // throws an error
+Address.to.substrateOrMirrorIfEthereum('address') // throws an error
+Address.to.substrateOrMirrorIfEthereum({}) // throws an error
+Address.to.substrateOrMirrorIfEthereum(55) // throws an error
+Address.to.substrateOrMirrorIfEthereum([]) // throws an error
 ```
 
-#### crossAccountIdFromObject
-
-The method accepts an address or an address object, and converts it to a Cross Account Id object. The method throws an error if an address is invalid.
-
-``` ts
-crossAccountIdFromObject: (obj: any) => CrossAccountId
-``` 
-
-Examples:
-
-``` ts
-Address.extract.crossAccountIdFromObject({Substrate: 'yGJMj5z32dpBUigGVFgatC382Ti3FNVSKyfgi87UF7f786MJL'})
-// {Substrate: '5HgvUDiRm5yjRSrrG9B6q6km7KLzkXMxvFLHPZpA13pmwCJQ'}
-
-Address.extract.crossAccountIdFromObject('yGJMj5z32dpBUigGVFgatC382Ti3FNVSKyfgi87UF7f786MJL')
-// {Substrate: '5HgvUDiRm5yjRSrrG9B6q6km7KLzkXMxvFLHPZpA13pmwCJQ'}
-
-Address.extract.crossAccountIdFromObject({Ethereum: '0x17c4E6453cC49aAaaeaca894e6A9683e00000005'})
-// {Ethereum: '0x17c4E6453cC49aAaaEACA894e6A9683e00000005'}
-
-Address.extract.crossAccountIdFromObject('0x17c4E6453cC49aAaaeaca894e6A9683e00000005')
-// {Ethereum: '0x17c4E6453cC49aAaaEACA894e6A9683e00000005'}
-
-Address.extract.crossAccountIdFromObject('yGJMj5z32ssBUigGVFgatC382Ti3FNVSKyfgi87UF7f786MJL') // throws the error 
-// invalid address
-
-Address.extract.crossAccountIdFromObject('object') // throws the error
-Address.extract.crossAccountIdFromObject(10) // throws the error
-Address.extract.crossAccountIdFromObject([]) // throws the error
-```
-
-#### crossAccountIdFromObjectNormalized
-
-The method accepts an address or an address object, and converts it to a Cross Account Id object with the normalized format. The method throws an error if an address is invalid.
-
-``` ts
-crossAccountIdFromObjectNormalized: (obj: any) => CrossAccountId
-```
-
-Examples:
-
-``` ts
-Address.extract.crossAccountIdFromObjectNormalized('5HgvUDiRm5yjRSrrG9B6q6km7KLzkXMxvFLHPZpA13pmwCJQ')
-// {Substrate: '5HgvUDiRm5yjRSrrG9B6q6km7KLzkXMxvFLHPZpA13pmwCJQ'}
-
-Address.extract.crossAccountIdFromObjectNormalized('yGJMj5z32dpBUigGVFgatC382Ti3FNVSKyfgi87UF7f786MJL')
-// {Substrate: '5HgvUDiRm5yjRSrrG9B6q6km7KLzkXMxvFLHPZpA13pmwCJQ'}
-
-Address.extract.crossAccountIdFromObjectNormalized({Substrate: 'yGJMj5z32dpBUigGVFgatC382Ti3FNVSKyfgi87UF7f786MJL'})
-// {Substrate: '5HgvUDiRm5yjRSrrG9B6q6km7KLzkXMxvFLHPZpA13pmwCJQ'}
-
-Address.extract.crossAccountIdFromObjectNormalized({Ethereum: '0x17c4E6453cC49aAaaeaca894e6A9683e00000005'})
-// {Ethereum: '0x17c4E6453cC49aAaaEACA894e6A9683e00000005'}
-
-Address.extract.crossAccountIdFromObjectNormalized('yGJMj5z32ssBUigGVFgatC382Ti3FNVSKyfgi87UF7f786MJL') // throws the error
-// invalid address
-
-Address.extract.crossAccountIdFromObjectNormalized('object') // throws the error
-Address.extract.crossAccountIdFromObjectNormalized(10) // throws the error
-Address.extract.crossAccountIdFromObjectNormalized([]) // throws the error
-```
 
 ### mirror
 
@@ -952,58 +883,6 @@ Address.compare.substrateAddresses([], 'address') // false
 ### substrate
 
 Helper methods for Substrate addresses.
-
-#### compare
-
-The method compares two Substrate addresses.
-
-``` ts 
-compare: (
-  address1: string | {Substrate: string} | {substrate: string}, 
-  address2: string | {Substrate: string} | {substrate: string}
-) => boolean
-```
-
-Examples:
-
-``` ts
-Address.substrate.compare(
-  '5HgvUDiRm5yjRSrrG9B6q6km7KLzkXMxvFLHPZpA13pmwCJQ', 
-  '5HgvUDiRm5yjRSrrG9B6q6km7KLzkXMxvFLHPZpA13pmwCJQ'
-) // true
-
-Address.substrate.compare(
-  'yGJMj5z32dpBUigGVFgatC382Ti3FNVSKyfgi87UF7f786MJL',
-  '5HgvUDiRm5yjRSrrG9B6q6km7KLzkXMxvFLHPZpA13pmwCJQ'
-) // true
-
-Address.substrate.compare(
-  {Substrate: '5HgvUDiRm5yjRSrrG9B6q6km7KLzkXMxvFLHPZpA13pmwCJQ'}, 
-  {substrate: '5HgvUDiRm5yjRSrrG9B6q6km7KLzkXMxvFLHPZpA13pmwCJQ'}
-) // true
-
-Address.substrate.compare(
-  {Substrate: '5HgvUDiRm5yjRSrrG9B6q6km7KLzkXMxvFLHPZpA13pmwCJQ'},
-  '5HgvUDiRm5yjRSrrG9B6q6km7KLzkXMxvFLHPZpA13pmwCJQ'
-) // true
-
-Address.substrate.compare(
-  '5HgvUDiRm5yjRSrrG9B6q6km7KLzkXMxvFLHPZpA13pmwCCD',
-  '5HgvUDiRm5yjRSrrG9B6q6km7KLzkXMxvFLHPZpA13pmwCJQ'
-) // false
-
-Address.substrate.compare(
-  '0x17c4E6453Cc49AAAaEACa894E6a9683e00000005', 
-  '0x17c4E6453Cc49AAAaEACa894E6a9683e00000005'
-) // false (for identical Ethereum addresses)
-
-Address.substrate.compare('5HgvUDiRm5yjRSrrG9B6q6km7KLzkXMxvFLHPZpA13pmwCCD', 2) // false 
-
-Address.substrate.compare(5, 2) // false 
-Address.substrate.compare('address', '2') // false 
-Address.substrate.compare([], 2) // false 
-Address.substrate.compare([], 'address') // false 
-```
 
 #### encode
 

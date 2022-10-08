@@ -8,8 +8,14 @@ describe('addresses', () => {
   const ethMirror = '0x2E61479A581F023808AAa5f2EC90bE6c2b250102'
   const doubleMirror = '5HikVEnsQT3U9LyTh5X9Bewud1wv4WkS7ovxrHRMCT2DFZPY'
 
+  const quartzMangled = 'yGDnKaHASMGaWSKS4Tv3SNQpTyJH89Ao3LfhgzcMbdhz6y2V'
+  const opalMangled = '5D7WxWqqUYNm962RUNdf1UTCcuasXCigHFMGG4hWX6hkp7z'
+  const ethAddressMangled = '0xFbbdd160b7A5Dc08C1D803Fe5E03Ba213D91041'
+
   const ethAddress = '0xFbbdd160b7A5Dc08C1D803Fe5E03Ba213D910415'
+  const ethAddressLowercase = '0xfbbdd160b7a5dc08c1d803fe5e03ba213d910415'
   const subMirrorOfEthAddress = '5Hao9DtZTNpCqUju8oGmtaCzau7zWMR3rBQkFfvE3suTu6aE'
+  const subMirrorOfEthAddressPrefix255 = 'yGJFbkzDAL71x8i9Y8LgZFWaFwHpF8KVQubmAzDaKAVBp4BnU'
 
   test.concurrent('is', () => {
     expect(Address.is.substrateAddress(opal)).toBe(true)
@@ -114,5 +120,157 @@ describe('addresses', () => {
     expect(() => {
       Address.nesting.idsToAddress(2 ** 32, 2 ** 32)
     }).toThrow()
+  })
+
+  test.concurrent('extract - address - substrate', () => {
+    expect(Address.extract.address(quartz)).toEqual(quartz)
+    expect(Address.extract.address({Substrate: quartz})).toEqual(quartz)
+    expect(Address.extract.address({substrate: quartz})).toEqual(quartz)
+
+    expect(Address.extract.addressNormalized(quartz)).toEqual(opal)
+    expect(Address.extract.addressNormalized({Substrate: quartz})).toEqual(opal)
+    expect(Address.extract.addressNormalized({substrate: quartz})).toEqual(opal)
+
+    expect(Address.extract.addressNormalized(opal)).toEqual(opal)
+    expect(Address.extract.addressNormalized({Substrate: opal})).toEqual(opal)
+    expect(Address.extract.addressNormalized({substrate: opal})).toEqual(opal)
+
+    expect(Address.extract.addressSafe(quartz)).toEqual(quartz)
+    expect(Address.extract.addressSafe({Substrate: quartz})).toEqual(quartz)
+    expect(Address.extract.addressSafe({substrate: quartz})).toEqual(quartz)
+
+    expect(Address.extract.addressNormalizedSafe(quartz)).toEqual(opal)
+    expect(Address.extract.addressNormalizedSafe({Substrate: quartz})).toEqual(opal)
+    expect(Address.extract.addressNormalizedSafe({substrate: quartz})).toEqual(opal)
+
+    expect(Address.extract.addressNormalizedSafe(opal)).toEqual(opal)
+    expect(Address.extract.addressNormalizedSafe({Substrate: opal})).toEqual(opal)
+    expect(Address.extract.addressNormalizedSafe({substrate: opal})).toEqual(opal)
+  })
+
+  test.concurrent('extract - address - ethereum', () => {
+    expect(Address.extract.address(ethAddress)).toEqual(ethAddress)
+    expect(Address.extract.address({Ethereum: ethAddress})).toEqual(ethAddress)
+    expect(Address.extract.address({ethereum: ethAddress})).toEqual(ethAddress)
+
+    expect(Address.extract.address(ethAddressLowercase)).toEqual(ethAddressLowercase)
+    expect(Address.extract.address({Ethereum: ethAddressLowercase})).toEqual(ethAddressLowercase)
+    expect(Address.extract.address({ethereum: ethAddressLowercase})).toEqual(ethAddressLowercase)
+
+    expect(Address.extract.addressNormalized(ethAddressLowercase)).toEqual(ethAddress)
+    expect(Address.extract.addressNormalized({Ethereum: ethAddressLowercase})).toEqual(ethAddress)
+    expect(Address.extract.addressNormalized({ethereum: ethAddressLowercase})).toEqual(ethAddress)
+
+    expect(Address.extract.addressSafe(ethAddress)).toEqual(ethAddress)
+    expect(Address.extract.addressSafe({Ethereum: ethAddress})).toEqual(ethAddress)
+    expect(Address.extract.addressSafe({ethereum: ethAddress})).toEqual(ethAddress)
+
+    expect(Address.extract.addressNormalizedSafe(ethAddressLowercase)).toEqual(ethAddress)
+    expect(Address.extract.addressNormalizedSafe({Ethereum: ethAddressLowercase})).toEqual(ethAddress)
+    expect(Address.extract.addressNormalizedSafe({ethereum: ethAddressLowercase})).toEqual(ethAddress)
+  })
+
+  test.concurrent('extract - crossAccountId', () => {
+    expect(Address.extract.crossAccountId(quartz)).toEqual({Substrate: quartz})
+    expect(Address.extract.crossAccountId({Substrate: quartz})).toEqual({Substrate: quartz})
+    expect(Address.extract.crossAccountId({substrate: quartz})).toEqual({Substrate: quartz})
+    expect(Address.extract.crossAccountId(ethAddress)).toEqual({Ethereum: ethAddress})
+    expect(Address.extract.crossAccountId({Ethereum: ethAddress})).toEqual({Ethereum: ethAddress})
+    expect(Address.extract.crossAccountId({ethereum: ethAddress})).toEqual({Ethereum: ethAddress})
+    expect(Address.extract.crossAccountId(ethAddressLowercase)).toEqual({Ethereum: ethAddressLowercase})
+    expect(Address.extract.crossAccountId({Ethereum: ethAddressLowercase})).toEqual({Ethereum: ethAddressLowercase})
+    expect(Address.extract.crossAccountId({ethereum: ethAddressLowercase})).toEqual({Ethereum: ethAddressLowercase})
+
+    expect(Address.extract.crossAccountIdSafe(quartz)).toEqual({Substrate: quartz})
+    expect(Address.extract.crossAccountIdSafe({Substrate: quartz})).toEqual({Substrate: quartz})
+    expect(Address.extract.crossAccountIdSafe({substrate: quartz})).toEqual({Substrate: quartz})
+    expect(Address.extract.crossAccountIdSafe(ethAddress)).toEqual({Ethereum: ethAddress})
+    expect(Address.extract.crossAccountIdSafe({Ethereum: ethAddress})).toEqual({Ethereum: ethAddress})
+    expect(Address.extract.crossAccountIdSafe({ethereum: ethAddress})).toEqual({Ethereum: ethAddress})
+    expect(Address.extract.crossAccountIdSafe(ethAddressLowercase)).toEqual({Ethereum: ethAddressLowercase})
+    expect(Address.extract.crossAccountIdSafe({Ethereum: ethAddressLowercase})).toEqual({Ethereum: ethAddressLowercase})
+    expect(Address.extract.crossAccountIdSafe({ethereum: ethAddressLowercase})).toEqual({Ethereum: ethAddressLowercase})
+
+    expect(Address.extract.crossAccountIdNormalized(quartz)).toEqual({Substrate: opal})
+    expect(Address.extract.crossAccountIdNormalized({Substrate: quartz})).toEqual({Substrate: opal})
+    expect(Address.extract.crossAccountIdNormalized({substrate: quartz})).toEqual({Substrate: opal})
+    expect(Address.extract.crossAccountIdNormalized(ethAddressLowercase)).toEqual({Ethereum: ethAddress})
+    expect(Address.extract.crossAccountIdNormalized({Ethereum: ethAddressLowercase})).toEqual({Ethereum: ethAddress})
+    expect(Address.extract.crossAccountIdNormalized({ethereum: ethAddressLowercase})).toEqual({Ethereum: ethAddress})
+
+    expect(Address.extract.crossAccountIdNormalizedSafe(quartz)).toEqual({Substrate: opal})
+    expect(Address.extract.crossAccountIdNormalizedSafe({Substrate: quartz})).toEqual({Substrate: opal})
+    expect(Address.extract.crossAccountIdNormalizedSafe({substrate: quartz})).toEqual({Substrate: opal})
+    expect(Address.extract.crossAccountIdNormalizedSafe(ethAddressLowercase)).toEqual({Ethereum: ethAddress})
+    expect(Address.extract.crossAccountIdNormalizedSafe({Ethereum: ethAddressLowercase})).toEqual({Ethereum: ethAddress})
+    expect(Address.extract.crossAccountIdNormalizedSafe({ethereum: ethAddressLowercase})).toEqual({Ethereum: ethAddress})
+  })
+
+  test.concurrent('extract - crossAccountId', () => {
+    expect(Address.extract.substrateOrMirrorIfEthereum(quartz)).toEqual(quartz)
+    expect(Address.extract.substrateOrMirrorIfEthereum(ethAddress)).toEqual(subMirrorOfEthAddress)
+
+    expect(Address.extract.substrateOrMirrorIfEthereumNormalized(quartz)).toEqual(opal)
+    expect(Address.extract.substrateOrMirrorIfEthereumNormalized(ethAddress)).toEqual(subMirrorOfEthAddress)
+
+    expect(Address.extract.substrateOrMirrorIfEthereumSafe(quartz)).toEqual(quartz)
+    expect(Address.extract.substrateOrMirrorIfEthereumSafe(ethAddress)).toEqual(subMirrorOfEthAddress)
+
+    expect(Address.extract.substrateOrMirrorIfEthereumNormalizedSafe(quartz)).toEqual(opal)
+    expect(Address.extract.substrateOrMirrorIfEthereumNormalizedSafe(ethAddress)).toEqual(subMirrorOfEthAddress)
+  })
+
+
+  test.concurrent('extract - throws', () => {
+    expect(() => {
+      Address.extract.address(quartzMangled)
+    }).toThrow()
+    expect(() => {
+      Address.extract.address({Substrate: quartzMangled})
+    }).toThrow()
+    expect(() => {
+      Address.extract.address({Substrate: quartzMangled})
+    }).toThrow()
+    expect(() => {
+      Address.extract.address({Substrate: ethAddress})
+    }).toThrow()
+
+    expect(() => {
+      Address.extract.address(ethAddressMangled)
+    }).toThrow()
+    expect(() => {
+      Address.extract.address({Ethereum: ethAddressMangled})
+    }).toThrow()
+    expect(() => {
+      Address.extract.address({ethereum: ethAddressMangled})
+    }).toThrow()
+
+    expect(() => {
+      Address.extract.address({Ethereum: quartz})
+    }).toThrow()
+
+    expect(() => {
+      Address.extract.address(0 as any)
+    }).toThrow()
+    expect(() => {
+      //@ts-ignore
+      Address.extract.address()
+    }).toThrow()
+
+    expect(() => {
+      Address.extract.address({} as any)
+    }).toThrow()
+
+    expect(() => {
+      Address.extract.address('')
+    }).toThrow()
+
+    expect(Address.extract.addressNormalizedSafe({substrate: opal})).toEqual(opal)
+    expect(Address.extract.addressSafe(quartzMangled)).toEqual(null)
+
+    expect(Address.extract.addressSafe({})).toEqual(null)
+    expect(Address.extract.addressSafe(0 as any)).toEqual(null)
+    expect((Address.extract.addressSafe as any)()).toEqual(null)
+    expect(Address.extract.crossAccountIdSafe({ethereum: quartz})).toEqual(null)
   })
 })

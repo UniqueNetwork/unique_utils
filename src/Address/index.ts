@@ -20,23 +20,24 @@ import {
   SubAddressObj, SubAddressObjUncapitalized,
 } from '../types'
 import {
-  substrateNormalizedWithMirrorIfEthereum,
-  addressToCrossAccountId, addressToCrossAccountIdNormalized,
-  guessAddressAndExtractItNormalized,
-  guessAddressAndExtractItNormalizedSafe
+  guessAddressAndExtractCrossAccountIdSafe,
+  guessAddressAndExtractCrossAccountIdUnsafe,
+  substrateOrMirrorIfEthereum
 } from './crossAccountId'
 
 import * as algorithms from './imports'
 import * as constants from './constants'
+import {add} from "@noble/hashes/_u64";
 
 export {constants, algorithms}
 
 const ETH_ADDRESS_REGEX = /^0x[a-fA-F0-9]{40}$/
 
 export type DecodeSubstrateAddressResult = {
-  u8a: Uint8Array,
-  hex: string,
+  u8a: Uint8Array
+  hex: string
   bigint: bigint
+  ss58Prefix: number
 }
 
 export const validate = {
@@ -131,20 +132,62 @@ export const nesting = {
   idsToAddress: collectionIdAndTokenIdToNestingAddress,
   addressToIds: nestingAddressToCollectionIdAndTokenId,
 }
-export const to = {
-  crossAccountId: addressToCrossAccountId,
-  crossAccountIdNormalized: addressToCrossAccountIdNormalized,
-  substrateNormalizedOrMirrorIfEthereum: substrateNormalizedWithMirrorIfEthereum,
-}
 
 export const extract = {
-  normalizedAddressFromObject: guessAddressAndExtractItNormalized,
-  normalizedAddressFromObjectSafe: guessAddressAndExtractItNormalizedSafe,
-  crossAccountIdFromObject: (obj: any): CrossAccountId => {
-    return addressToCrossAccountId(guessAddressAndExtractItNormalized(obj))
+  address: (addressOrCrossAccountId: string | object): string => {
+    const crossAccountId = guessAddressAndExtractCrossAccountIdUnsafe(addressOrCrossAccountId)
+    return (crossAccountId.Substrate || crossAccountId.Ethereum) as string
   },
-  crossAccountIdFromObjectNormalized: (obj: any): CrossAccountId => {
-    return addressToCrossAccountId(guessAddressAndExtractItNormalized(obj))
+  addressSafe: (addressOrCrossAccountId: string | object): string | null => {
+    const crossAccountId = guessAddressAndExtractCrossAccountIdSafe(addressOrCrossAccountId)
+    return crossAccountId ? (crossAccountId.Substrate || crossAccountId.Ethereum) as string : null
+  },
+
+  addressNormalized: (addressOrCrossAccountId: string | object): string => {
+    const crossAccountId = guessAddressAndExtractCrossAccountIdUnsafe(addressOrCrossAccountId, true)
+    return (crossAccountId.Substrate || crossAccountId.Ethereum) as string
+  },
+  addressNormalizedSafe: (addressOrCrossAccountId: string | object): string | null => {
+    const crossAccountId = guessAddressAndExtractCrossAccountIdSafe(addressOrCrossAccountId, true)
+    return crossAccountId ? (crossAccountId.Substrate || crossAccountId.Ethereum) as string : null
+  },
+
+
+  crossAccountId: (addressOrCrossAccountId: string | object): CrossAccountId => {
+    return guessAddressAndExtractCrossAccountIdUnsafe(addressOrCrossAccountId)
+  },
+  crossAccountIdSafe: (addressOrCrossAccountId: string | object): CrossAccountId | null => {
+    return guessAddressAndExtractCrossAccountIdSafe(addressOrCrossAccountId)
+  },
+
+  crossAccountIdNormalized: (addressOrCrossAccountId: string | object): CrossAccountId => {
+    return guessAddressAndExtractCrossAccountIdUnsafe(addressOrCrossAccountId, true)
+  },
+  crossAccountIdNormalizedSafe: (addressOrCrossAccountId: string | object): CrossAccountId | null => {
+    return guessAddressAndExtractCrossAccountIdSafe(addressOrCrossAccountId, true)
+  },
+
+
+  substrateOrMirrorIfEthereum: (addressOrCrossAccountId: string | object): string => {
+    return substrateOrMirrorIfEthereum(addressOrCrossAccountId)
+  },
+  substrateOrMirrorIfEthereumSafe: (addressOrCrossAccountId: string | object): string | null => {
+    try {
+      return substrateOrMirrorIfEthereum(addressOrCrossAccountId)
+    } catch {
+      return null
+    }
+  },
+
+  substrateOrMirrorIfEthereumNormalized: (addressOrCrossAccountId: string | object): string => {
+    return substrateOrMirrorIfEthereum(addressOrCrossAccountId, true)
+  },
+  substrateOrMirrorIfEthereumNormalizedSafe: (addressOrCrossAccountId: string | object): string | null => {
+    try {
+      return substrateOrMirrorIfEthereum(addressOrCrossAccountId, true)
+    } catch {
+      return null
+    }
   },
 }
 
@@ -176,7 +219,6 @@ export const Address = {
   validate,
   collection,
   nesting,
-  to,
   extract,
   mirror,
   normalize,

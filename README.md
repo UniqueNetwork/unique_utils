@@ -48,7 +48,9 @@ import {Utf8, Utf16, HexString} from '@unique-nft/utils/string'
 // import {StringUtils} from '@unique-nft/utils'
 
 Utf8.stringToU8a('a 🌷') // Uint8Array [97, 32, 240, 159, 140, 183]
-Utf8.u8aToString([97, 32, 240, 159, 140, 183]) // "a 🌷"
+Utf8.u8aToString([97, 32, 240, 159, 140, 183]) // "a 🌷" // it takes usual number arrays too
+Utf8.hexStringToString('0x6120f09f8cb7') // "a 🌷"
+Utf8.stringToHexString('a 🌷') // "0x6120f09f8cb7"
 Utf8.lengthInBytes('a 🌷') // 6
 
 Utf16.stringToU16a('a 🌷') // Uint16Array [97, 32, 55356, 57143]

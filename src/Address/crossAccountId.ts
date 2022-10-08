@@ -1,56 +1,51 @@
 import {normalizeEthereumAddress} from './ethereum'
 import {normalizeSubstrateAddress} from './substrate'
 import {CrossAccountId} from '../types'
-import {is, mirror, normalize} from './index'
+import {is, mirror, normalize, validate} from './index'
 
-export const guessAddressAndExtractItNormalizedSafe = (address: string | object): string | null => {
+export const guessAddressAndExtractCrossAccountIdUnsafe = (rawAddress: string | object, normalize: boolean = false): CrossAccountId => {
+  const address = rawAddress as any
+
   if (typeof address === 'object') {
-    if (is.substrateAddressObject(address)) return normalize.substrateAddress(address.Substrate)
-    else if (is.substrateAddressObjectUncapitalized(address)) return normalize.substrateAddress(address.substrate)
-    else if (is.ethereumAddressObject(address)) return normalizeEthereumAddress(address.Ethereum)
-    else if (is.ethereumAddressObjectUncapitalized(address)) return normalizeEthereumAddress(address.ethereum)
-    else return null
+    if (address.hasOwnProperty('Substrate')) {
+      validate.substrateAddress(address.Substrate)
+      return {Substrate: normalize ? normalizeSubstrateAddress(address.Substrate) : address.Substrate}
+    } else if (address.hasOwnProperty('substrate')) {
+      validate.substrateAddress(address.substrate)
+      return {Substrate: normalize ? normalizeSubstrateAddress(address.substrate) : address.substrate}
+    } else if (address.hasOwnProperty('Ethereum')) {
+      validate.ethereumAddress(address.Ethereum)
+      return {Ethereum: normalize ? normalizeEthereumAddress(address.Ethereum) : address.Ethereum}
+    } else if (address.hasOwnProperty('ethereum')) {
+      validate.ethereumAddress(address.ethereum)
+      return {Ethereum: normalize ? normalizeEthereumAddress(address.ethereum) : address.ethereum}
+    } else {
+      throw new Error(`Address ${address} is not a valid crossAccountId object (should contain "Substrate"/"substrate" or "Ethereum"/"ethereum" field)`)
+    }
   }
+
   if (typeof address === 'string') {
-    if (is.substrateAddress(address)) return normalizeSubstrateAddress(address)
-    else if (is.ethereumAddress(address)) return normalizeEthereumAddress(address)
-    else return null
+    if (is.substrateAddress(address)) return {Substrate: normalize ? normalizeSubstrateAddress(address) : address}
+    else if (is.ethereumAddress(address)) return {Ethereum: normalize ? normalizeEthereumAddress(address) : address}
+    else {
+      throw new Error(`Address ${address} is not a valid Substrate or Ethereum address`)
+    }
   }
 
-  return null
+  throw new Error(`Address ${address} is not a string or object: ${typeof address}`)
 }
 
-export const guessAddressAndExtractItNormalized = (address: string | object): string => {
-  const result = guessAddressAndExtractItNormalizedSafe(address)
-  if (!result) {
-    throw new Error(`Passed address is not a valid address string or object: ${JSON.stringify(address).slice(0, 100)}`)
+export const guessAddressAndExtractCrossAccountIdSafe = (address: string | object, normalize: boolean = false): CrossAccountId | null => {
+  try {
+    return guessAddressAndExtractCrossAccountIdUnsafe(address, normalize)
+  } catch {
+    return null
   }
-  return result
 }
 
-export const addressToCrossAccountId = (address: string): CrossAccountId => {
-  if (is.substrateAddress(address)) {
-    return {Substrate: address}
-  } else if (is.ethereumAddress(address)) {
-    return {Ethereum: address}
-  }
-
-  throw new Error(`Passed address ${address} is not substrate nor ethereum address`)
-}
-
-export const addressToCrossAccountIdNormalized = (address: string): CrossAccountId => {
-  if (is.substrateAddress(address)) {
-    return {Substrate: normalize.substrateAddress(address)}
-  } else if (is.ethereumAddress(address)) {
-    return {Ethereum: normalize.ethereumAddress(address)}
-  }
-
-  throw new Error(`Passed address ${address} is not substrate nor ethereum address`)
-}
-
-export const substrateNormalizedWithMirrorIfEthereum = (address: string): string => {
-  const addressObject = addressToCrossAccountId(address)
+export const substrateOrMirrorIfEthereum = (address: string | object, normalize: boolean = false): string => {
+  const addressObject = guessAddressAndExtractCrossAccountIdUnsafe(address, normalize)
   return addressObject.Substrate
-    ? normalizeSubstrateAddress(addressObject.Substrate)
+    ? addressObject.Substrate
     : mirror.ethereumToSubstrate(addressObject.Ethereum as string)
 }

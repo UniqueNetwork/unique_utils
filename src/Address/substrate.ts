@@ -33,7 +33,7 @@ const sshash = (data: Uint8Array): Uint8Array => {
   return blake2AsU8a(u8aConcat([SS58_PREFIX, data]), 64);
 }
 
-const checkAddressChecksum = (decoded: Uint8Array): [boolean, number, number, number] => {
+const checkAddressChecksum = (decoded: Uint8Array, ignoreChecksum: boolean = false): [boolean, number, number, number] => {
   const ss58Length = (decoded[0] & 0b0100_0000) ? 2 : 1;
   const ss58Decoded = ss58Length === 1
     ? decoded[0]
@@ -43,13 +43,17 @@ const checkAddressChecksum = (decoded: Uint8Array): [boolean, number, number, nu
   const isPublicKey = [34 + ss58Length, 35 + ss58Length].includes(decoded.length);
   const length = decoded.length - (isPublicKey ? 2 : 1);
 
-  // calculate the hash and do the checksum byte checks
-  const hash = sshash(decoded.subarray(0, length));
-  const isValid = (decoded[0] & 0x80) === 0 && ![46, 47].includes(decoded[0]) && (
-    isPublicKey
-      ? decoded[decoded.length - 2] === hash[0] && decoded[decoded.length - 1] === hash[1]
-      : decoded[decoded.length - 1] === hash[0]
-  );
+  let isValid = false
+
+  if (!ignoreChecksum) {
+    // calculate the hash and do the checksum byte checks
+    const hash = sshash(decoded.subarray(0, length));
+    isValid = (decoded[0] & 0x80) === 0 && ![46, 47].includes(decoded[0]) && (
+      isPublicKey
+        ? decoded[decoded.length - 2] === hash[0] && decoded[decoded.length - 1] === hash[1]
+        : decoded[decoded.length - 1] === hash[0]
+    )
+  }
 
   return [isValid, length, ss58Length, ss58Decoded];
 }
@@ -105,7 +109,7 @@ export function decodeSubstrateAddress(address: string, ignoreChecksum?: boolean
       throw realError
     }
 
-    const [isValid, endPos, ss58Length, ss58Decoded] = checkAddressChecksum(decoded)
+    const [isValid, endPos, ss58Length, ss58Decoded] = checkAddressChecksum(decoded, ignoreChecksum)
 
     if (!ignoreChecksum && !isValid) {
       realError = new Error(`Invalid decoded address checksum`)
@@ -122,7 +126,8 @@ export function decodeSubstrateAddress(address: string, ignoreChecksum?: boolean
     return {
       u8a: publicKey,
       hex,
-      bigint: BigInt(hex)
+      bigint: BigInt(hex),
+      ss58Prefix: ss58Decoded,
     }
   } catch (error) {
     throw realError
@@ -132,7 +137,7 @@ export function decodeSubstrateAddress(address: string, ignoreChecksum?: boolean
 }
 
 type SubAddressObj = { Substrate: string }
-export const compareSubstrateAddresses = (address1: string | SubAddressObj | object, address2: string | SubAddressObj | object): boolean => {
+export const compareSubstrateAddresses = (address1: string | object, address2: string | object): boolean => {
   const addr1 = typeof address1 === 'string'
     ? address1
     : ((address1 as SubAddressObj).Substrate || (address1 as any).substrate) as string | undefined

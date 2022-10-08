@@ -24,7 +24,7 @@ export const normalizeEthereumAddress = (address: string) => {
 }
 
 type EthAddressObj = { Ethereum: string }
-export const compareEthereumAddresses = (address1: string | EthAddressObj | object, address2: string | EthAddressObj | object): boolean => {
+export const compareEthereumAddresses = (address1: string | object, address2: string | object): boolean => {
   const addr1 = typeof address1 === 'string'
     ? address1
     : ((address1 as EthAddressObj).Ethereum || (address1 as any).ethereum) as string | undefined
