@@ -8,6 +8,17 @@ export type CrossAccountId =
   |
   EthAddressObj & { Substrate?: never }
 
+export type AddressType = 'Ethereum' | 'Substrate'
+
+export type EnhancedCrossAccountId = CrossAccountId & {
+  address: string
+  addressSS58: string
+  type: AddressType
+  isEthereum: boolean
+  isSubstrate: boolean
+}
+
+
 export type CrossAccountIdUncapitalized =
   SubAddressObjUncapitalized & { ethereum?: never }
   |
@@ -15,3 +26,5 @@ export type CrossAccountIdUncapitalized =
 
 export type CrossAccountIdOrString = CrossAccountId | string
 export type CrossAccountIdUncapitalizedOrString = CrossAccountIdUncapitalized | string
+
+

@@ -39,14 +39,14 @@ export const compareEthereumAddresses = (address1: string | object, address2: st
 
 }
 
-export const collectionIdToEthAddress = (collectionId: number): string | null => {
+export const collectionIdToEthAddress = (collectionId: number): string => {
   validate.collectionId(collectionId)
   return unsafeNormalizeEthereumAddress(
     COLLECTION_ADDRESS_PREFIX +
     DWORDHexString.fromNumber(collectionId)
   )
 }
-export const ethAddressToCollectionId = (address: string): number | null => {
+export const ethAddressToCollectionId = (address: string): number => {
   validate.collectionAddress(address)
   return DWORDHexString.toNumber(address.slice(-8))
 }

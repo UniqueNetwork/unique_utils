@@ -1,7 +1,8 @@
 import {normalizeEthereumAddress} from './ethereum'
 import {normalizeSubstrateAddress} from './substrate'
-import {CrossAccountId} from '../types'
+import {CrossAccountId, EnhancedCrossAccountId} from '../types'
 import {is, mirror, normalize, validate} from './index'
+import {Address} from "../index";
 
 export const guessAddressAndExtractCrossAccountIdUnsafe = (rawAddress: string | object, normalize: boolean = false): CrossAccountId => {
   const address = rawAddress as any
@@ -48,4 +49,29 @@ export const substrateOrMirrorIfEthereum = (address: string | object, normalize:
   return addressObject.Substrate
     ? addressObject.Substrate
     : mirror.ethereumToSubstrate(addressObject.Ethereum as string)
+}
+
+export const addressInAnyFormToEnhancedCrossAccountId = (address: string | object, ss58Prefix: number = 42): EnhancedCrossAccountId => {
+  const crossAccountId = Address.extract.crossAccountId(address)
+
+  if (crossAccountId.Ethereum) {
+    const normalized = Address.normalize.ethereumAddress(crossAccountId.Ethereum)
+    return {
+      ...crossAccountId,
+      address: normalized,
+      addressSS58: normalized,
+      isEthereum: true,
+      isSubstrate: false,
+      type: 'Ethereum',
+    }
+  } else {
+    return {
+      ...crossAccountId,
+      address: Address.normalize.substrateAddress(crossAccountId.Substrate as string),
+      addressSS58: Address.normalize.substrateAddress(crossAccountId.Substrate as string, ss58Prefix),
+      isEthereum: false,
+      isSubstrate: true,
+      type: 'Substrate',
+    }
+  }
 }

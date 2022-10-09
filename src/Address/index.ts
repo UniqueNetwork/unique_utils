@@ -18,8 +18,10 @@ import {
   CrossAccountId, CrossAccountIdUncapitalized,
   EthAddressObj, EthAddressObjUncapitalized,
   SubAddressObj, SubAddressObjUncapitalized,
+  EnhancedCrossAccountId,
 } from '../types'
 import {
+  addressInAnyFormToEnhancedCrossAccountId,
   guessAddressAndExtractCrossAccountIdSafe,
   guessAddressAndExtractCrossAccountIdUnsafe,
   substrateOrMirrorIfEthereum
@@ -122,6 +124,27 @@ export const is = {
   ethereumAddressObjectUncapitalized(obj: any): obj is EthAddressObjUncapitalized {
     return typeof obj === 'object' && typeof obj?.ethereum === 'string' && is.ethereumAddress(obj.ethereum)
   },
+  substrateAddressInAnyForm(address: any): address is string | SubAddressObj | SubAddressObjUncapitalized {
+    return typeof address === 'string'
+      ? is.substrateAddress(address)
+      : (
+        typeof address === 'object' &&
+        !!address &&
+        (is.substrateAddressObject(address) || is.substrateAddressObjectUncapitalized(address))
+      )
+  },
+  ethereumAddressInAnyForm(address: any): address is string | EthAddressObj | EthAddressObjUncapitalized {
+    return typeof address === 'string'
+      ? is.ethereumAddress(address)
+      : (
+        typeof address === 'object' &&
+        !!address &&
+        (is.ethereumAddressObject(address) || is.ethereumAddressObjectUncapitalized(address))
+      )
+  },
+  validAddressInAnyForm(address: any): address is string | SubAddressObj | SubAddressObjUncapitalized | EthAddressObj | EthAddressObjUncapitalized {
+    return is.ethereumAddressInAnyForm(address) || is.substrateAddressInAnyForm(address)
+  }
 }
 
 export const collection = {
@@ -185,6 +208,17 @@ export const extract = {
   substrateOrMirrorIfEthereumNormalizedSafe: (addressOrCrossAccountId: string | object): string | null => {
     try {
       return substrateOrMirrorIfEthereum(addressOrCrossAccountId, true)
+    } catch {
+      return null
+    }
+  },
+
+  enhancedCrossAccountId: (addressInAnyForm: string | object, ss58Prefix: number = 42): EnhancedCrossAccountId => {
+    return addressInAnyFormToEnhancedCrossAccountId(addressInAnyForm, ss58Prefix)
+  },
+  enhancedCrossAccountIdSafe: (addressInAnyForm: string | object, ss58Prefix: number = 42): EnhancedCrossAccountId | null => {
+    try {
+      return addressInAnyFormToEnhancedCrossAccountId(addressInAnyForm, ss58Prefix)
     } catch {
       return null
     }
