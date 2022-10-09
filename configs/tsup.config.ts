@@ -7,6 +7,7 @@ export default defineConfig([
       string: "src/StringUtils/index.ts",
       address: "src/Address/index.ts",
       extension: "src/ExtensionTools/index.ts",
+      chainDLC: "src/ChainDirectLightClient/index.ts",
     },
     format: [
       "esm",
@@ -14,7 +15,7 @@ export default defineConfig([
     ],
     target: 'es2020',
     dts: true,
-    splitting: false,
+    // splitting: false,
     sourcemap: true,
     // noExternal: [/^base/, /\^@noble/],
   },
