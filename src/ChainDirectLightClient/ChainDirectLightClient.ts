@@ -7,6 +7,7 @@ export enum UNIQUE_CHAINS {
   quartz = 'quartz',
   opal = 'opal',
   sapphire = 'sapphire',
+  rc = 'rc',
 }
 
 const UNIQUE_RPCs: { [K in UNIQUE_CHAINS]: string } = {
@@ -14,6 +15,7 @@ const UNIQUE_RPCs: { [K in UNIQUE_CHAINS]: string } = {
   opal: 'https://rpc-opal.unique.network/',
   unique: 'https://rpc.unique.network/',
   sapphire: 'https://rpc-sapphire.unique.network/',
+  rc: 'https://rpc-rc.unique.network/',
 }
 
 const requestRPC = async <T = any>(rpcUrl: string, method: string, params: unknown[]): Promise<T> => {
@@ -34,6 +36,7 @@ export type TokenPropertyPermissionValue = {
 }
 export type TokenPropertyPermission = {
   key: string
+  keyHex: string
   permission: TokenPropertyPermissionValue
 }
 
@@ -41,6 +44,7 @@ const decodeTPPArray = (arr: Array<{ key: number[], permission: any }>): TokenPr
   return arr.map(({key, permission}) => {
     return {
       key: StringUtils.Utf8.numberArrayToString(key),
+      keyHex: StringUtils.HexString.fromArray(key),
       permission: permission as TokenPropertyPermissionValue,
     }
   })
@@ -49,8 +53,8 @@ const decodeTPPArray = (arr: Array<{ key: number[], permission: any }>): TokenPr
 export interface DecodedProperty {
   key: string
   value: string
-  keyBytes: string
-  valueByres: string
+  keyHex: string
+  valueHex: string
 }
 
 export type DecodedPropertiesMap = Record<string, DecodedProperty>
@@ -63,9 +67,9 @@ const decodeProperties = (arr: Array<{ key: number[], value: number[] }>): { pro
     const {key, value} = elem
     const decoded: DecodedProperty = {
       key: StringUtils.Utf8.numberArrayToString(key),
-      keyBytes: StringUtils.HexString.fromArray(key),
+      keyHex: StringUtils.HexString.fromArray(key),
       value: StringUtils.Utf8.numberArrayToString(value),
-      valueByres: StringUtils.HexString.fromArray(value),
+      valueHex: StringUtils.HexString.fromArray(value),
     }
     properties.push(decoded)
     propertiesMap[decoded.key] = decoded
@@ -364,4 +368,5 @@ export const ChainDirectLightClients: { [K in UNIQUE_CHAINS]: IChainDirectLightC
   quartz: generateChainDirectLightClient(UNIQUE_RPCs.quartz, {ss58Prefix: 255}),
   opal: generateChainDirectLightClient(UNIQUE_RPCs.opal, {ss58Prefix: 42}),
   sapphire: generateChainDirectLightClient(UNIQUE_RPCs.sapphire, {ss58Prefix: 8883}),
+  rc: generateChainDirectLightClient(UNIQUE_RPCs.rc, {ss58Prefix: 42}),
 }
