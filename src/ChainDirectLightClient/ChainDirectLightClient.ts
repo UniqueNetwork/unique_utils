@@ -57,9 +57,14 @@ export interface DecodedProperty {
   valueHex: string
 }
 
-export type DecodedPropertiesMap = Record<string, DecodedProperty>
+export interface DecodedPropertyWithTokenPropertyPermission extends DecodedProperty {
+  tokenPropertyPermission: TokenPropertyPermissionValue
+}
 
-const decodeProperties = (arr: Array<{ key: number[], value: number[] }>): { properties: DecodedProperty[], propertiesMap: DecodedPropertiesMap } => {
+export type DecodedPropertiesMap = Record<string, DecodedProperty>
+export type DecodedPropertiesWithTokenPropertyPermissionsMap = Record<string, DecodedPropertyWithTokenPropertyPermission>
+
+const decodeCollectionProperties = (arr: Array<{ key: number[], value: number[] }>): { properties: DecodedProperty[], propertiesMap: DecodedPropertiesMap } => {
   const properties: DecodedProperty[] = []
   const propertiesMap: Record<string, DecodedProperty> = {}
 
@@ -74,6 +79,24 @@ const decodeProperties = (arr: Array<{ key: number[], value: number[] }>): { pro
     properties.push(decoded)
     propertiesMap[decoded.key] = decoded
   }
+  return {
+    properties,
+    propertiesMap,
+  }
+}
+
+const decodeTokenProperties = (arr: Array<{ key: number[], value: number[] }>, tpps: TokenPropertyPermission[]): { properties: DecodedPropertyWithTokenPropertyPermission[], propertiesMap: DecodedPropertiesWithTokenPropertyPermissionsMap } => {
+  const {properties, propertiesMap} = decodeCollectionProperties(arr) as {
+    properties: DecodedPropertyWithTokenPropertyPermission[]
+    propertiesMap: DecodedPropertiesWithTokenPropertyPermissionsMap
+  }
+
+  for (const property of properties) {
+    const tppValue = tpps.find(tpp => tpp.keyHex === property.keyHex)!.permission
+    property.tokenPropertyPermission = tppValue
+    propertiesMap[property.key].tokenPropertyPermission = tppValue
+  }
+
   return {
     properties,
     propertiesMap,
@@ -151,8 +174,9 @@ export interface INftToken {
   collectionAddress: string
   tokenAddress: string
   owner: EnhancedCrossAccountId
-  properties: DecodedProperty[]
-  propertiesMap: DecodedPropertiesMap
+
+  properties: DecodedPropertyWithTokenPropertyPermission[]
+  propertiesMap: DecodedPropertiesWithTokenPropertyPermissionsMap
 }
 
 export interface IRftToken {
@@ -167,8 +191,8 @@ export interface IRftToken {
   allOwnersAreKnown: boolean
   isOnlyOneOwner: boolean
 
-  properties: DecodedProperty[]
-  propertiesMap: DecodedPropertiesMap
+  properties: DecodedPropertyWithTokenPropertyPermission[]
+  propertiesMap: DecodedPropertiesWithTokenPropertyPermissionsMap
 }
 
 
@@ -176,7 +200,7 @@ export const requestCollection = async (rpcUrl: string, collectionId: number, ss
   const rawCollection = await requestRPC(rpcUrl, "unique_collectionById", [collectionId])
   if (!rawCollection) return null
 
-  const {properties, propertiesMap} = decodeProperties(rawCollection.properties)
+  const {properties, propertiesMap} = decodeCollectionProperties(rawCollection.properties)
 
   const [
     adminListResult,
@@ -244,12 +268,19 @@ export const requestCollection = async (rpcUrl: string, collectionId: number, ss
 }
 
 export const requestNftToken = async (rpcUrl: string, collectionId: number, tokenId: number, ss58Prefix: number): Promise<INftToken | null> => {
-  const rawToken = await requestRPC(rpcUrl, "unique_tokenData", [collectionId, tokenId])
-  if (!rawToken || !rawToken.owner) {
+  const [rawCollection, rawToken] = await Promise.all([
+    requestRPC(rpcUrl, "unique_collectionById", [collectionId]),
+    requestRPC(rpcUrl, "unique_tokenData", [collectionId, tokenId]),
+  ])
+
+  if (!rawCollection || rawCollection.mode !== 'NFT' || !rawToken || !rawToken.owner) {
     return null
   }
 
-  const {properties, propertiesMap} = decodeProperties(rawToken.properties)
+  const {properties, propertiesMap} = decodeTokenProperties(
+    rawToken.properties,
+    decodeTPPArray(rawCollection.token_property_permissions)
+  )
 
   const nftToken: INftToken = {
     collectionId,
@@ -267,8 +298,12 @@ export const requestNftToken = async (rpcUrl: string, collectionId: number, toke
 
 
 export const requestRftToken = async (rpcUrl: string, collectionId: number, tokenId: number, ss58Prefix: number): Promise<IRftToken | null> => {
-  const rawToken = await requestRPC(rpcUrl, "unique_tokenData", [collectionId, tokenId])
-  if (!rawToken || typeof rawToken.pieces !== 'number') { // protects from NFT/FT collections and from chains below 929030
+  const [rawCollection, rawToken] = await Promise.all([
+    requestRPC(rpcUrl, "unique_collectionById", [collectionId]),
+    requestRPC(rpcUrl, "unique_tokenData", [collectionId, tokenId]),
+  ])
+
+  if (!rawCollection || rawCollection.mode !== 'ReFungible' || !rawToken || typeof rawToken.pieces !== 'number') { // protects from NFT/FT collections and from chains below 929030
     return null
   }
 
@@ -283,7 +318,10 @@ export const requestRftToken = async (rpcUrl: string, collectionId: number, toke
     allOwnersAreKnown = owners.length < 10
   }
 
-  const {properties, propertiesMap} = decodeProperties(rawToken.properties)
+  const {properties, propertiesMap} = decodeTokenProperties(
+    rawToken.properties,
+    decodeTPPArray(rawCollection.token_property_permissions)
+  )
 
   const rftToken: IRftToken = {
     collectionId,

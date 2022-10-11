@@ -168,12 +168,25 @@ const knownPolkadotExtensions: IPolkadotExtensionGenericInfo[] = Object.entries(
 }).sort((a, b) => compareTwoStrings(a.name, b.name))
 
 
-const isWeb3Injected = (): boolean => {
-  return (
-    typeof window !== 'undefined' &&
-    !!(window as any).injectedWeb3 &&
-    Object.keys((window as any).injectedWeb3).length !== 0
-  )
+const documentReadyPromise = (): Promise<void> => {
+  if (typeof window === 'undefined' || window.document.readyState === 'complete') {
+    return Promise.resolve()
+  } else {
+    return new Promise<void>(resolve => window.addEventListener('load', () => resolve()));
+  }
+}
+
+
+const isWeb3Environment = async (): Promise<boolean> => {
+  if (typeof window === 'undefined') {
+    return false
+  }
+
+  await documentReadyPromise()
+
+  const injectedWeb3 = (window as any).injectedWeb3
+
+  return !!injectedWeb3 && Object.keys(injectedWeb3).length !== 0
 }
 
 export interface IPolkadotExtensionListWalletsResult {
@@ -204,7 +217,7 @@ const getWalletInfo = (walletName: string, nonInjectedWallet: NonInjectedWallet)
 }
 
 const listWallets = async (): Promise<IPolkadotExtensionListWalletsResult> => {
-  if (!isWeb3Injected()) {
+  if (!(await isWeb3Environment())) {
     return {wallets: [], info: {extensionFound: false, enabledWalletsNumber: 0}}
   }
 
@@ -230,7 +243,7 @@ export type IPolkadotExtensionLoadWalletByNameResult = {
 }
 
 const loadWalletByName = async (walletName: string): Promise<IPolkadotExtensionLoadWalletByNameResult> => {
-  if (!isWeb3Injected()) {
+  if (!(await isWeb3Environment())) {
     return {result: null, error: new Error(`now injected web3 found or environment not a browser`)}
   }
 
@@ -334,7 +347,7 @@ export interface IPolkadotExtensionLoadWalletsResult {
 }
 
 const loadWallets = async (onlyEnabled: boolean = false): Promise<IPolkadotExtensionLoadWalletsResult> => {
-  if (!isWeb3Injected()) {
+  if (!(await isWeb3Environment())) {
     return {
       wallets: [], accounts: [], rejectedWallets: [], info: {
         extensionFound: false,
@@ -394,7 +407,7 @@ const loadWallets = async (onlyEnabled: boolean = false): Promise<IPolkadotExten
 }
 
 export const Polkadot = {
-  isWeb3Injected,
+  isWeb3Environment,
   listWallets,
 
   enableAndLoadAllWallets: () => loadWallets(false),
