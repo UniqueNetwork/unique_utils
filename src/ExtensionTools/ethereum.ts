@@ -24,7 +24,7 @@ export interface AddEthereumChainParameter {
 }
 
 
-export const requestAccounts = async (): Promise<Promise<IEthereumRequestAccountsResult>> => {
+export const requestAccounts = async (): Promise<IEthereumRequestAccountsResult> => {
   if (typeof window === 'undefined' || !(window as any).ethereum) {
     return {accounts: [], selectedAddress: null, info: {extensionFound: false}}
   }
