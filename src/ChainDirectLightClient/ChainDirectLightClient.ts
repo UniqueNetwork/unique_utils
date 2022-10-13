@@ -166,6 +166,7 @@ export interface ICollection {
     isFT: boolean
     type: CollectionType
   }
+  flags?: {foreign: boolean, erc721metadata: boolean}
 }
 
 export interface INftToken {
@@ -241,6 +242,7 @@ export const requestCollection = async (rpcUrl: string, collectionId: number, ss
   }
 
   const collection: ICollection = {
+    ...rawCollection,
     collectionId,
     collectionAddress: Address.collection.idToAddress(collectionId),
     owner: Address.extract.enhancedCrossAccountId(rawCollection.owner, ss58Prefix),
@@ -263,6 +265,7 @@ export const requestCollection = async (rpcUrl: string, collectionId: number, ss
       isNFT, isRFT, isFT,
       type: isRFT ? 'RFT' : isFT ? 'FT' : 'NFT'
     },
+    flags: rawCollection.flags || undefined
   }
   return collection
 }
