@@ -21,15 +21,16 @@ import {Address} from '@unique-nft/utils'
 // or
 // import {Address} from '@unique-nft/utils/address'
 // or
-// import {mirror} from '@unique-nft/utils/address'
-
+// import {extract} from '@unique-nft/utils/address'
 
 Address.is.ethereumAddressObject({Ethereum: '0xf8cC75F76d46c3b1c5F270Fe06c8FFdeAB8E5eaB'}) //true
 Address.validate.substrateAddress('5HgvUDiRm5yjRSrrG9B6q6km7KLzkXMxvFLHPZpA13pmwCJQ') // true
 Address.mirror.substrateToEthereum('5HgvUDiRm5yjRSrrG9B6q6km7KLzkXMxvFLHPZpA13pmwCJQ') // 0xf8cC75F76d46c3b1c5F270Fe06c8FFdeAB8E5eaB
 Address.collection.idToAddress(105) // '0x17c4e6453CC49aaaAEAcA894e6d9683E00000069'
 Address.nesting.idsToAddress(10, 5) // '0xf8238CcffF8eD887463Fd5e00000000a00000005'
-Address.to.substrateNormalizedOrMirrorIfEthereum('0xf8cC75F76d46c3b1c5F270Fe06c8FFdeAB8E5eaB') // '5GwWnwbYRzwvcyAmQqCBB4h5JNspv8xPxpUm77wXbooxS3t5'
+Address.extract.substrateOrMirrorIfEthereum('0xf8cC75F76d46c3b1c5F270Fe06c8FFdeAB8E5eaB') // '5GwWnwbYRzwvcyAmQqCBB4h5JNspv8xPxpUm77wXbooxS3t5'
+Address.extract.addressForScan('yGJMj5z32dpBUigGVFgatC382Ti3FNVSKyfgi87UF7f786MJL') // 5HgvUDiRm5yjRSrrG9B6q6km7KLzkXMxvFLHPZpA13pmwCJQ
+Address.extract.addressForScan('0xf8cC75F76d46c3b1c5F270Fe06c8FFdeAB8E5eaB') // 0xf8cc75f76d46c3b1c5f270fe06c8ffdeab8e5eab
 ```
 
 And much more! Mirroring, packing/unpacking CrossAccountId in different formats, guessing address types and more.

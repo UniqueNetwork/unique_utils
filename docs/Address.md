@@ -648,6 +648,31 @@ Address.extract.enhancedCrossAccountId('5Fp3dxhLyxkzrGE6Niqdvfy5B35duX7PcLqPpwJK
 Same for `enhancedCrossAccountIdSafe` method, but it returns null on invalid input,
 while `enhancedCrossAccountId` throws an error.
 
+#### addressForScan
+#### addressForScanSafe
+
+Returns:  
+- if input is substrate address/crossAccountId, normalized (prefix 42) substrate address  
+- if input is ethereum address/crossAccountId, lowercased ethereum address
+- otherwise, throw if `addressForScan` called or return null if `addressForScanSafe` called
+
+Examples:
+
+```ts
+Address.extract.addressForScan('yGJMj5z32dpBUigGVFgatC382Ti3FNVSKyfgi87UF7f786MJL') // 5HgvUDiRm5yjRSrrG9B6q6km7KLzkXMxvFLHPZpA13pmwCJQ
+Address.extract.addressForScan({Substrate: 'yGJMj5z32dpBUigGVFgatC382Ti3FNVSKyfgi87UF7f786MJL'}) // 5HgvUDiRm5yjRSrrG9B6q6km7KLzkXMxvFLHPZpA13pmwCJQ
+Address.extract.addressForScan({substrate: 'yGJMj5z32dpBUigGVFgatC382Ti3FNVSKyfgi87UF7f786MJL'}) // 5HgvUDiRm5yjRSrrG9B6q6km7KLzkXMxvFLHPZpA13pmwCJQ
+Address.extract.addressForScan('0xf8cC75F76d46c3b1c5F270Fe06c8FFdeAB8E5eaB') // 0xf8cc75f76d46c3b1c5f270fe06c8ffdeab8e5eab
+Address.extract.addressForScan({Ethereum: '0xf8cC75F76d46c3b1c5F270Fe06c8FFdeAB8E5eaB'}) // 0xf8cc75f76d46c3b1c5f270fe06c8ffdeab8e5eab
+Address.extract.addressForScan({ethereum: '0xf8cC75F76d46c3b1c5F270Fe06c8FFdeAB8E5eaB'}) // 0xf8cc75f76d46c3b1c5f270fe06c8ffdeab8e5eab
+
+Address.extract.addressForScanSafe('abc') // null
+Address.extract.addressForScanSafe({ethereum: 'abc'}) // null
+Address.extract.addressForScanSafe(1) // null
+Address.extract.addressForScanSafe([]) // null
+Address.extract.addressForScanSafe() // null
+```
+
 #### substrateOrMirrorIfEthereum
 #### substrateOrMirrorIfEthereumNormalized
 

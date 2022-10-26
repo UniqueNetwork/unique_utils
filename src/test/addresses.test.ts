@@ -265,6 +265,29 @@ describe('addresses', () => {
       Address.extract.address('')
     }).toThrow()
 
+    expect(() => {
+      Address.extract.addressForScan(quartzMangled)
+    }).toThrow()
+    expect(() => {
+      Address.extract.addressForScan(ethAddressMangled)
+    }).toThrow()
+
+    expect(() => {
+      Address.extract.addressForScan(0 as any)
+    }).toThrow()
+    expect(() => {
+      //@ts-ignore
+      Address.extract.addressForScan()
+    }).toThrow()
+
+    expect(() => {
+      Address.extract.addressForScan({} as any)
+    }).toThrow()
+
+    expect(() => {
+      Address.extract.addressForScan('')
+    }).toThrow()
+
     expect(Address.extract.addressNormalizedSafe({substrate: opal})).toEqual(opal)
     expect(Address.extract.addressSafe(quartzMangled)).toEqual(null)
 
@@ -272,5 +295,28 @@ describe('addresses', () => {
     expect(Address.extract.addressSafe(0 as any)).toEqual(null)
     expect((Address.extract.addressSafe as any)()).toEqual(null)
     expect(Address.extract.crossAccountIdSafe({ethereum: quartz})).toEqual(null)
+
+    expect(Address.extract.addressForScanSafe(quartzMangled)).toEqual(null)
+    expect(Address.extract.addressForScanSafe(ethAddressMangled)).toEqual(null)
+    expect(Address.extract.addressForScanSafe(null as any)).toEqual(null)
+    expect(Address.extract.addressForScanSafe('')).toEqual(null)
+
+    expect(Address.extract.addressForScan({substrate: quartz})).toEqual(opal)
+    expect(Address.extract.addressForScan({Substrate: quartz})).toEqual(opal)
+    expect(Address.extract.addressForScan(quartz)).toEqual(opal)
+    expect(Address.extract.addressForScan({ethereum: ethAddress})).toEqual(ethAddressLowercase)
+    expect(Address.extract.addressForScan({Ethereum: ethAddress})).toEqual(ethAddressLowercase)
+    expect(Address.extract.addressForScan(ethAddress)).toEqual(ethAddressLowercase)
+    expect(Address.extract.addressForScan({ethereum: ethAddressLowercase})).toEqual(ethAddressLowercase)
+
+    expect(Address.extract.addressForScanSafe({substrate: quartz})).toEqual(opal)
+    expect(Address.extract.addressForScanSafe({Substrate: quartz})).toEqual(opal)
+    expect(Address.extract.addressForScanSafe({ethereum: ethAddress})).toEqual(ethAddressLowercase)
+    expect(Address.extract.addressForScanSafe({Ethereum: ethAddress})).toEqual(ethAddressLowercase)
+    expect(Address.extract.addressForScanSafe(ethAddress)).toEqual(ethAddressLowercase)
+    expect(Address.extract.addressForScanSafe({ethereum: ethAddressLowercase})).toEqual(ethAddressLowercase)
+    expect(Address.extract.addressForScanSafe(quartz)).toEqual(opal)
+
+
   })
 })
