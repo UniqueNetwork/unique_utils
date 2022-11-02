@@ -7,7 +7,7 @@ export default defineConfig([
       string: "src/StringUtils/index.ts",
       address: "src/Address/index.ts",
       extension: "src/ExtensionTools/index.ts",
-      chainDLC: "src/ChainDirectLightClient/index.ts",
+      chainLens: "src/ChainLens/index.ts",
     },
     format: [
       "esm",

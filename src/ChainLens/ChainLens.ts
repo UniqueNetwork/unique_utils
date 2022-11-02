@@ -350,11 +350,11 @@ const collectionIdOrAddressToCollectionId = (collectionIdOrAddress: number | str
     : collectionIdOrAddress
 }
 
-export interface ChainDirectLightClientOptions {
+export interface ChainLensOptions {
   ss58Prefix: number
 }
 
-export const generateChainDirectLightClient = (rpcBaseUrl: string, options: ChainDirectLightClientOptions = {ss58Prefix: 42}) => {
+export const generateChainLens = (rpcBaseUrl: string, options: ChainLensOptions = {ss58Prefix: 42}) => {
   let rpcUrl = rpcBaseUrl
 
   const ss58Prefix = options.ss58Prefix
@@ -402,12 +402,12 @@ export const generateChainDirectLightClient = (rpcBaseUrl: string, options: Chai
   }
 }
 
-export type IChainDirectLightClient = ReturnType<typeof generateChainDirectLightClient>
+export type IChainLens = ReturnType<typeof generateChainLens>
 
-export const ChainDirectLightClients: { [K in UNIQUE_CHAINS]: IChainDirectLightClient } = {
-  unique: generateChainDirectLightClient(UNIQUE_RPCs.unique, {ss58Prefix: 7391}),
-  quartz: generateChainDirectLightClient(UNIQUE_RPCs.quartz, {ss58Prefix: 255}),
-  opal: generateChainDirectLightClient(UNIQUE_RPCs.opal, {ss58Prefix: 42}),
-  sapphire: generateChainDirectLightClient(UNIQUE_RPCs.sapphire, {ss58Prefix: 8883}),
-  rc: generateChainDirectLightClient(UNIQUE_RPCs.rc, {ss58Prefix: 42}),
+export const ChainLenses: { [K in UNIQUE_CHAINS]: IChainLens } = {
+  unique: generateChainLens(UNIQUE_RPCs.unique, {ss58Prefix: 7391}),
+  quartz: generateChainLens(UNIQUE_RPCs.quartz, {ss58Prefix: 255}),
+  opal: generateChainLens(UNIQUE_RPCs.opal, {ss58Prefix: 42}),
+  sapphire: generateChainLens(UNIQUE_RPCs.sapphire, {ss58Prefix: 8883}),
+  rc: generateChainLens(UNIQUE_RPCs.rc, {ss58Prefix: 42}),
 }

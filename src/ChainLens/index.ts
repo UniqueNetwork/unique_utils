@@ -1,17 +1,17 @@
-import {ChainDirectLightClients, generateChainDirectLightClient} from './ChainDirectLightClient'
+import {ChainLenses, generateChainLens} from './ChainLens'
 
 const constants = {
   maxRefungiblePieces: 1000000000000000000000n,
   collectionCreationPrice: 2,
 }
 
-export {ChainDirectLightClients, constants, generateChainDirectLightClient}
-export default ChainDirectLightClients
+export {ChainLenses, constants, generateChainLens}
+export default ChainLenses
 
 export type {
   DecodedProperty,
   UNIQUE_CHAINS,
-  IChainDirectLightClient,
+  IChainLens,
   INftToken,
   IRftToken,
   ICollection,
@@ -23,5 +23,5 @@ export type {
   CollectionPermissions,
   TokenPropertyPermission,
   TokenPropertyPermissionValue,
-} from './ChainDirectLightClient'
+} from './ChainLens'
 
