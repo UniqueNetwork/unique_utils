@@ -78,13 +78,15 @@ export const getAccounts = async (): Promise<IEthereumRequestAccountsResult> => 
   const ethereum = (window as any).ethereum
 
   const accounts: string[] = await ethereum.request({method: 'eth_accounts'})
+  const chainIdNumber = parseInt(ethereum.chainId, 16)
   return {
     accounts,
     selectedAddress: ethereum.selectedAddress,
     info: {
       extensionFound: true,
       chainId: ethereum.chainId,
-      chainIdNumber: parseInt(ethereum.chainId, 16),
+      chainIdNumber,
+      uniqueChainName: chainNameByChainId[chainIdNumber],
     },
   }
 }
