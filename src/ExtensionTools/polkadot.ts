@@ -1,6 +1,7 @@
 // =========================================
 // Polkadot types
 // =========================================
+import {documentReadyPromiseAndWindowIsOk} from './utils'
 export type KeypairType = 'ed25519' | 'sr25519' | 'ecdsa' | 'ethereum'
 
 interface InjectedAccount {
@@ -167,22 +168,11 @@ const knownPolkadotExtensions: IPolkadotExtensionGenericInfo[] = Object.entries(
   }
 }).sort((a, b) => compareTwoStrings(a.name, b.name))
 
-
-const documentReadyPromise = (): Promise<void> => {
-  if (typeof window === 'undefined' || window.document.readyState === 'complete') {
-    return Promise.resolve()
-  } else {
-    return new Promise<void>(resolve => window.addEventListener('load', () => resolve()));
-  }
-}
-
-
 const isWeb3Environment = async (): Promise<boolean> => {
-  if (typeof window === 'undefined') {
+  const windowIsOk = await documentReadyPromiseAndWindowIsOk()
+  if (!windowIsOk) {
     return false
   }
-
-  await documentReadyPromise()
 
   const injectedWeb3 = (window as any).injectedWeb3
 

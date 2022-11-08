@@ -16,7 +16,9 @@ export default ExtensionTools
 
 export type {
   AddEthereumChainParameter,
-  IEthereumRequestAccountsResult,
+  UNIQUE_CHAIN,
+  UpdateReason,
+  IEthereumAccountResult,
 } from './ethereum'
 
 export type {
