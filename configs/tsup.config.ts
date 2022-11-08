@@ -8,6 +8,7 @@ export default defineConfig([
       address: "src/Address/index.ts",
       extension: "src/ExtensionTools/index.ts",
       chainLens: "src/ChainLens/index.ts",
+      exchangeInfo: "src/ExchangeInfo/index.ts",
     },
     format: [
       "esm",
