@@ -249,7 +249,7 @@ const subscribeOnChanges = (cb: (result: { reason: UpdateReason, chainId: number
 
 import type {ContractReceipt, Event} from 'ethers'
 
-const parseEthersTxReceipt = (tx: ContractReceipt, options = {decimals: 18}) => {
+const parseEthersTxReceipt = <ParsedEvents = any>(tx: ContractReceipt, options = {decimals: 18}) => {
   const events = (tx.events || []).filter(event => !!event.event).map((event: Event, index) => {
     const args = event.args
     return {
@@ -269,7 +269,7 @@ const parseEthersTxReceipt = (tx: ContractReceipt, options = {decimals: 18}) => 
   }).reduce((acc, elem) => {
     acc[elem.name] = elem.events
     return acc
-  }, {} as {[K: string]: any})
+  }, {} as {[K: string]: any}) as ParsedEvents
 
   const rawPrice = tx.gasUsed.toBigInt() * tx.effectiveGasPrice.toBigInt()
   const priceStr = rawPrice.toString().padStart(options.decimals + 1, '0')
@@ -283,7 +283,7 @@ const parseEthersTxReceipt = (tx: ContractReceipt, options = {decimals: 18}) => 
     to: tx.to,
     rawPrice,
     price,
-    rawEvents: tx.events,
+    rawEvents: tx.events || [],
     events,
     gasUsed: tx.gasUsed.toBigInt(),
     cumulativeGasUsed: tx.cumulativeGasUsed.toBigInt(),
