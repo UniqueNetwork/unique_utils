@@ -5,8 +5,8 @@ export const windowIsOkSync = (): boolean => {
 }
 
 type IEthereumExtensionError = Error & {
-  extensionFound: boolean
-  isUserRejected: boolean
+  extensionNotFound: boolean
+  userRejected: boolean
 }
 
 export interface AddEthereumChainParameter {
@@ -73,8 +73,8 @@ const getOrRequestAccounts = async (requestInsteadOfGet: boolean = false): Promi
   const windowIsOk = await documentReadyPromiseAndWindowIsOk()
   if (!windowIsOk || !(window as any).ethereum) {
     const error = new Error('No extension found') as IEthereumExtensionError
-    error.extensionFound = false
-    error.isUserRejected = false
+    error.extensionNotFound = true
+    error.userRejected = false
 
     return {
       address: null,
@@ -99,8 +99,8 @@ const getOrRequestAccounts = async (requestInsteadOfGet: boolean = false): Promi
     // If this happens, the user rejected the connection request.
 
     const error = _error as IEthereumExtensionError
-    error.isUserRejected = _error.code === 4001
-    error.extensionFound = true
+    error.userRejected = _error.code === 4001
+    error.extensionNotFound = false
 
     const chainIdStr = (window as any).ethereum?.chainId
     const chainId = typeof chainIdStr === 'string' ? parseInt(chainIdStr, 16) : NaN
@@ -247,6 +247,50 @@ const subscribeOnChanges = (cb: (result: { reason: UpdateReason, chainId: number
   }
 }
 
+import type {ContractReceipt, Event} from 'ethers'
+
+const parseEthersTxReceipt = (tx: ContractReceipt, options = {decimals: 18}) => {
+  const events = (tx.events || []).filter(event => !!event.event).map((event: Event, index) => {
+    const args = event.args
+    return {
+      name: event.event || `event_${index.toString().padStart(4, '0')}`,
+      // args: event.args!,
+      events: !args ? {} : Object.keys(args)
+        .filter(key => isNaN(parseInt(key)))
+        .reduce((acc, key) => {
+          const rawValue = args[key]
+          const value = (typeof rawValue === 'object' && rawValue?._isBigNumber)
+            ? rawValue.toBigInt()
+            : rawValue
+          acc[key] = value
+          return acc
+        }, {} as {[K: string]: any})
+    }
+  }).reduce((acc, elem) => {
+    acc[elem.name] = elem.events
+    return acc
+  }, {} as {[K: string]: any})
+
+  const rawPrice = tx.gasUsed.toBigInt() * tx.effectiveGasPrice.toBigInt()
+  const priceStr = rawPrice.toString().padStart(options.decimals + 1, '0')
+  const price = parseFloat([priceStr.slice(0, -options.decimals), '.', priceStr.slice(-options.decimals)].join(''))
+
+  return {
+    get tx() {
+      return tx
+    },
+    from: tx.from,
+    to: tx.to,
+    rawPrice,
+    price,
+    rawEvents: tx.events,
+    events,
+    gasUsed: tx.gasUsed.toBigInt(),
+    cumulativeGasUsed: tx.cumulativeGasUsed.toBigInt(),
+    effectiveGasPrice: tx.effectiveGasPrice.toBigInt(),
+  }
+}
+
 export type {UNIQUE_CHAIN}
 
 export const Ethereum = {
@@ -263,4 +307,6 @@ export const Ethereum = {
   switchChainTo,
 
   UNIQUE_CHAINS_DATA_FOR_EXTENSIONS,
+
+  parseEthersTxReceipt,
 }
