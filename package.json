@@ -29,6 +29,7 @@
     "copy_files": "cpy ./package.json ./README.md ./dist",
     "esmon": "nodemon --exec \"esno\" ",
     "patch": "npm run release -- -i patch --ci",
+    "minor": "npm run release -- -i minor --ci",
     "release": "dotenv -e ./configs/.release.env -- release-it --config ./configs/.release-it.js --github.release",
     "testrun": "vitest run",
     "test": "vitest"
