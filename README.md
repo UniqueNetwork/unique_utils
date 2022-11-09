@@ -91,37 +91,30 @@ const Ethereum = ExtensionTools.Ethereum
 //or
 import {Ethereum} from '@unique-nft/utils/extension'
 
-const getAccountsResult = await Ethereum.getAccounts()
-/*
-{
-  accounts: ['0xf8cC75F76d46c3b1c5F270Fe06c8FFdeAB8E5eaB'],
-  info: {extensionFound: true, chainId: '0x22b2', chainIdNumber: 8882},
-  selectedAddress: 0xf8cC75F76d46c3b1c5F270Fe06c8FFdeAB8E5eaB
-}
-// or, when there is no granted account:
-{accounts: [], selectedAddress: null, info: {extensionFound: true, chainId: '0x22b2', chainIdNumber: 8882}}
-// or, when there is no extension:
-{accounts: [], selectedAddress: null, info: {extensionFound: false}}
-// in Node.js `info.extensionFound is` always false.
-*/
+const {error, address, chainId} = await Ethereum.getAccounts()
+// or
+const {error, address, chainId} = await Ethereum.requestAccounts()
+// or
+const {error, address, chainId} = await Ethereum.getOrRequestAccounts(boolean) // true - resuest, false - get
+
+//subscribe on chainId or SelectedAddress changes:
+const unsubscribe = Ethereum.subscribeOnChanges(({reason, address, chainId}) => {/*...*/})
 ```
 
-Simple example which just checks extension and tries to get an address without prompting user:
+Also, Ethereum extension tool provide some helpers to work with Unique chains.  
+All this helpers have all 4 chains, so every helper can be used for `unique`, `quartz`, `opal` and `sapphire`.
 
 ```ts
-import {Ethereum} from '@unique-nft/utils/extension'
+Ethereum.currentChainIs.opal() // true - false
+Ethereum.addChain.quartz()
+Ethereum.switchChainTo.unique()
 
-let result = await Ethereum.getAccounts()
-
-if (result.info.extensionFound && result.selectedAddress) {
-  //woohoo, let's create a Web3 Provider like that:
-  const provider = new ethers.providers.Web3Provider(window.ethereum)
-  console.log(ethers.utils.formatEther(await provider.getBalance(result.selectedAddress)))
-}
+Ethereum.chainNameToChainId.unique // 8880
+Ethereum.chainIdToChainName[8881] // quartz
 ```
 
 More complex example, when we want to request user to grant access.  
-_Note: If user has already granted access, it will work silently, just like_ `getAccounts`.
+If user has already granted access, it will work silently, just like `getAccounts`.
 
 ```ts
 import {Ethereum} from '@unique-nft/utils/extension'
@@ -137,6 +130,30 @@ if (result.selectedAddress) {
     console.log(`Oops, user doesn't want us. Let's show them some kawaii popup`)
   } else {
     console.error(result.info.error)
+  }
+}
+```
+
+```ts
+import {Ethereum} from '@unique-nft/utils/extension'
+
+let {error, address, chainId} = await Ethereum.requestAccounts()
+
+if (address) {
+  //woohoo, let's create a Web3 Provider like that:
+  let provider = new ethers.providers.Web3Provider(window.ethereum)
+  console.log(ethers.utils.formatEther(await provider.getBalance(result.selectedAddress)))
+} else {
+  if (error) {
+    if (error.extensionNotFound) {
+      alert(`Please install some ethereum browser extension`)  
+    } else if (error.userRejected) {
+      alert(`But whyyyyyyy?`)
+    } else {
+      alert(`Connection to ethereum extension failed: ${error.message}`)
+    }
+  } else {
+    alert('Please, create some account or grant permissions for an account')
   }
 }
 ```
