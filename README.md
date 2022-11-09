@@ -111,28 +111,13 @@ Ethereum.switchChainTo.unique()
 
 Ethereum.chainNameToChainId.unique // 8880
 Ethereum.chainIdToChainName[8881] // quartz
+
+// non-related with extension helpers
+Ethereum.parseEthersTxReceipt(txReceipt) // unstable
 ```
 
 More complex example, when we want to request user to grant access.  
 If user has already granted access, it will work silently, just like `getAccounts`.
-
-```ts
-import {Ethereum} from '@unique-nft/utils/extension'
-
-const result = await Ethereum.requestAccounts()
-
-if (result.selectedAddress) {
-  //woohoo, let's create a Web3 Provider like that:
-  const provider = new ethers.providers.Web3Provider(window.ethereum)
-  console.log(ethers.utils.formatEther(await provider.getBalance(result.selectedAddress)))
-} else {
-  if (result.info.userRejected) {
-    console.log(`Oops, user doesn't want us. Let's show them some kawaii popup`)
-  } else {
-    console.error(result.info.error)
-  }
-}
-```
 
 ```ts
 import {Ethereum} from '@unique-nft/utils/extension'
