@@ -175,11 +175,11 @@ export const extract = {
     return crossAccountId ? (crossAccountId.Substrate || crossAccountId.Ethereum) as string : null
   },
 
-  addressForScan: (addressOrCrossAccountId: string | object): string => {
+  addressForScanNormalized: (addressOrCrossAccountId: string | object): string => {
     const crossAccountId = guessAddressAndExtractCrossAccountIdUnsafe(addressOrCrossAccountId, true)
     return (crossAccountId.Substrate || crossAccountId.Ethereum!.toLowerCase()) as string
   },
-  addressForScanSafe: (addressOrCrossAccountId: string | object): string | null => {
+  addressForScanNormalizedSafe: (addressOrCrossAccountId: string | object): string | null => {
     const crossAccountId = guessAddressAndExtractCrossAccountIdSafe(addressOrCrossAccountId, true)
     return crossAccountId ? (crossAccountId.Substrate || crossAccountId.Ethereum!.toLowerCase()) as string : null
   },

@@ -266,26 +266,26 @@ describe('addresses', () => {
     }).toThrow()
 
     expect(() => {
-      Address.extract.addressForScan(quartzMangled)
+      Address.extract.addressForScanNormalized(quartzMangled)
     }).toThrow()
     expect(() => {
-      Address.extract.addressForScan(ethAddressMangled)
+      Address.extract.addressForScanNormalized(ethAddressMangled)
     }).toThrow()
 
     expect(() => {
-      Address.extract.addressForScan(0 as any)
+      Address.extract.addressForScanNormalized(0 as any)
     }).toThrow()
     expect(() => {
       //@ts-ignore
-      Address.extract.addressForScan()
+      Address.extract.addressForScanNormalized()
     }).toThrow()
 
     expect(() => {
-      Address.extract.addressForScan({} as any)
+      Address.extract.addressForScanNormalized({} as any)
     }).toThrow()
 
     expect(() => {
-      Address.extract.addressForScan('')
+      Address.extract.addressForScanNormalized('')
     }).toThrow()
 
     expect(Address.extract.addressNormalizedSafe({substrate: opal})).toEqual(opal)
@@ -296,26 +296,26 @@ describe('addresses', () => {
     expect((Address.extract.addressSafe as any)()).toEqual(null)
     expect(Address.extract.crossAccountIdSafe({ethereum: quartz})).toEqual(null)
 
-    expect(Address.extract.addressForScanSafe(quartzMangled)).toEqual(null)
-    expect(Address.extract.addressForScanSafe(ethAddressMangled)).toEqual(null)
-    expect(Address.extract.addressForScanSafe(null as any)).toEqual(null)
-    expect(Address.extract.addressForScanSafe('')).toEqual(null)
+    expect(Address.extract.addressForScanNormalizedSafe(quartzMangled)).toEqual(null)
+    expect(Address.extract.addressForScanNormalizedSafe(ethAddressMangled)).toEqual(null)
+    expect(Address.extract.addressForScanNormalizedSafe(null as any)).toEqual(null)
+    expect(Address.extract.addressForScanNormalizedSafe('')).toEqual(null)
 
-    expect(Address.extract.addressForScan({substrate: quartz})).toEqual(opal)
-    expect(Address.extract.addressForScan({Substrate: quartz})).toEqual(opal)
-    expect(Address.extract.addressForScan(quartz)).toEqual(opal)
-    expect(Address.extract.addressForScan({ethereum: ethAddress})).toEqual(ethAddressLowercase)
-    expect(Address.extract.addressForScan({Ethereum: ethAddress})).toEqual(ethAddressLowercase)
-    expect(Address.extract.addressForScan(ethAddress)).toEqual(ethAddressLowercase)
-    expect(Address.extract.addressForScan({ethereum: ethAddressLowercase})).toEqual(ethAddressLowercase)
+    expect(Address.extract.addressForScanNormalized({substrate: quartz})).toEqual(opal)
+    expect(Address.extract.addressForScanNormalized({Substrate: quartz})).toEqual(opal)
+    expect(Address.extract.addressForScanNormalized(quartz)).toEqual(opal)
+    expect(Address.extract.addressForScanNormalized({ethereum: ethAddress})).toEqual(ethAddressLowercase)
+    expect(Address.extract.addressForScanNormalized({Ethereum: ethAddress})).toEqual(ethAddressLowercase)
+    expect(Address.extract.addressForScanNormalized(ethAddress)).toEqual(ethAddressLowercase)
+    expect(Address.extract.addressForScanNormalized({ethereum: ethAddressLowercase})).toEqual(ethAddressLowercase)
 
-    expect(Address.extract.addressForScanSafe({substrate: quartz})).toEqual(opal)
-    expect(Address.extract.addressForScanSafe({Substrate: quartz})).toEqual(opal)
-    expect(Address.extract.addressForScanSafe({ethereum: ethAddress})).toEqual(ethAddressLowercase)
-    expect(Address.extract.addressForScanSafe({Ethereum: ethAddress})).toEqual(ethAddressLowercase)
-    expect(Address.extract.addressForScanSafe(ethAddress)).toEqual(ethAddressLowercase)
-    expect(Address.extract.addressForScanSafe({ethereum: ethAddressLowercase})).toEqual(ethAddressLowercase)
-    expect(Address.extract.addressForScanSafe(quartz)).toEqual(opal)
+    expect(Address.extract.addressForScanNormalizedSafe({substrate: quartz})).toEqual(opal)
+    expect(Address.extract.addressForScanNormalizedSafe({Substrate: quartz})).toEqual(opal)
+    expect(Address.extract.addressForScanNormalizedSafe({ethereum: ethAddress})).toEqual(ethAddressLowercase)
+    expect(Address.extract.addressForScanNormalizedSafe({Ethereum: ethAddress})).toEqual(ethAddressLowercase)
+    expect(Address.extract.addressForScanNormalizedSafe(ethAddress)).toEqual(ethAddressLowercase)
+    expect(Address.extract.addressForScanNormalizedSafe({ethereum: ethAddressLowercase})).toEqual(ethAddressLowercase)
+    expect(Address.extract.addressForScanNormalizedSafe(quartz)).toEqual(opal)
 
 
   })
