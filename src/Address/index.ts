@@ -29,11 +29,11 @@ import {
 
 import * as algorithms from './imports'
 import * as constants from './constants'
-import {add} from "@noble/hashes/_u64";
 
 export {constants, algorithms}
 
 const ETH_ADDRESS_REGEX = /^0x[a-fA-F0-9]{40}$/
+const SUB_PUBLIC_KEY_REGEX = /^0x[a-fA-F0-9]{64}$/
 
 export type DecodeSubstrateAddressResult = {
   u8a: Uint8Array
@@ -50,6 +50,12 @@ export const validate = {
   ethereumAddress: (address: string) => {
     if (!is.ethereumAddress(address)) {
       throw new Error(`address "${address}" is not valid ethereum address`)
+    }
+    return true
+  },
+  substratePublicKey: (address: string) => {
+    if (!is.substratePublicKey(address)) {
+      throw new Error(`address "${address}" is not valid substrate public key`)
     }
     return true
   },
@@ -90,6 +96,9 @@ export const is = {
   },
   ethereumAddress: (address: string): boolean => {
     return typeof address === 'string' && address.length === 42 && !!address.match(ETH_ADDRESS_REGEX)
+  },
+  substratePublicKey: (address: string): boolean => {
+    return typeof address === 'string' && address.length === 66 && !!address.match(SUB_PUBLIC_KEY_REGEX)
   },
 
   collectionAddress: (address: string): boolean => {

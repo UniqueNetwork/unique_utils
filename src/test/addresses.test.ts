@@ -8,6 +8,8 @@ describe('addresses', () => {
   const ethMirror = '0x2E61479A581F023808AAa5f2EC90bE6c2b250102'
   const doubleMirror = '5HikVEnsQT3U9LyTh5X9Bewud1wv4WkS7ovxrHRMCT2DFZPY'
 
+  const substratePublicKey = '0xf8cc75f76d46c3b1c5f270fe06c8ffdeab8e5eab97f2331fb49123b48ceb2a7d'
+
   const quartzMangled = 'yGDnKaHASMGaWSKS4Tv3SNQpTyJH89Ao3LfhgzcMbdhz6y2V'
   const opalMangled = '5D7WxWqqUYNm962RUNdf1UTCcuasXCigHFMGG4hWX6hkp7z'
   const ethAddressMangled = '0xFbbdd160b7A5Dc08C1D803Fe5E03Ba213D91041'
@@ -23,6 +25,8 @@ describe('addresses', () => {
     expect(Address.is.substrateAddress('123')).toBe(false)
     expect(Address.is.substrateAddress([] as any)).toBe(false)
     expect(Address.is.substrateAddress({} as any)).toBe(false)
+    expect(Address.is.substratePublicKey(substratePublicKey)).toBe(true)
+    expect(Address.is.substratePublicKey(substratePublicKey.slice(2))).toBe(false)
 
     //@ts-ignore
     expect(Address.is.substrateAddress()).toBe(false)

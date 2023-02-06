@@ -98,6 +98,27 @@ Address.is.ethereumAddress('5HgvUDiRm5yjRSrrG9B6q6km7KLzkXMxvFLHPZpA13pmwCJQ') /
 Address.is.ethereumAddress([]) // false
 ```
 
+
+#### substratePublicKey
+
+The method checks whether an address is a valid Substrate public key. Input address capitalization doesn't matter, 0x at the start is required.
+
+```ts
+substratePublicKey: (address: string) => boolean
+```
+
+Examples:
+```ts
+Address.is.substratePublicKey('0xf8cc75f76d46c3b1c5f270fe06c8ffdeab8e5eab97f2331fb49123b48ceb2a7d') // true
+Address.is.substratePublicKey('f8cc75f76d46c3b1c5f270fe06c8ffdeab8e5eab97f2331fb49123b48ceb2a7d')   // false
+Address.is.substratePublicKey('0xf8cc75f76d46c3b1c5f270fe06c8ffdeab8e5eab97f2331fb49123b48ceb2a7')  // false
+Address.is.substratePublicKey('0x34055Awqa8Cd2a82b656A3605AB058fB25E943A1')       // false
+Address.is.substratePublicKey('5HgvUDiRm5yjRSrrG9B6q6km7KLzkXMxvFLHPZpA13pmwCJQ') // false
+Address.is.substratePublicKey('0x34055awqa8cd2a82b656a3605ab058fb25e943a')        // false
+Address.is.substratePublicKey('123')  // false
+Address.is.substratePublicKey([])     // false
+```
+
 #### collectionAddress
 
 The method checks whether an address is a valid collection address (input address capitalization doesn't matter).
@@ -348,6 +369,26 @@ Address.validate.ethereumAddress('0x34055Awqa8Cd2a82b656A3605AB058fB25E943A1') /
 Address.validate.ethereumAddress('address') // throws the error 
 Address.validate.ethereumAddress(101) // throws the error 
 Address.validate.ethereumAddress([]) // throws the error 
+```
+
+#### substratePublicKey
+
+The method checks whether an address is a valid Substrate public key. Input address capitalization doesn't matter, 0x at the start is required.
+
+```ts
+substratePublicKey: (address: string) => boolean
+```
+
+Examples:
+```ts
+Address.validate.substratePublicKey('0xf8cc75f76d46c3b1c5f270fe06c8ffdeab8e5eab97f2331fb49123b48ceb2a7d') // true
+Address.validate.substratePublicKey('f8cc75f76d46c3b1c5f270fe06c8ffdeab8e5eab97f2331fb49123b48ceb2a7d')   // throws an error
+Address.validate.substratePublicKey('0xf8cc75f76d46c3b1c5f270fe06c8ffdeab8e5eab97f2331fb49123b48ceb2a7')  // throws an error
+Address.validate.substratePublicKey('0x34055Awqa8Cd2a82b656A3605AB058fB25E943A1')       // throws an error
+Address.validate.substratePublicKey('5HgvUDiRm5yjRSrrG9B6q6km7KLzkXMxvFLHPZpA13pmwCJQ') // throws an error
+Address.validate.substratePublicKey('0x34055awqa8cd2a82b656a3605ab058fb25e943a')        // throws an error
+Address.validate.substratePublicKey('123')  // throws an error
+Address.validate.substratePublicKey([])     // throws an error
 ```
 
 #### nestingAddress
