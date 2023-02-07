@@ -591,10 +591,13 @@ with CrossAccountId wrapped, or just a string:
 ```ts
 Address.extract.address('yGJMj5z32dpBUigGVFgatC382Ti3FNVSKyfgi87UF7f786MJL') 
 Address.extract.address('5HgvUDiRm5yjRSrrG9B6q6km7KLzkXMxvFLHPZpA13pmwCJQ') // in any format / encoded with any ss58 prefix 
+Address.extract.address('0x2e61479a581f023808aaa5f2ec90be6c2b250102d99d788bde3c8d4153a0ed08') // even substrate public key. "0x" prefix is required
 Address.extract.address('0x17c4E6453Cc49aaaaeaca894E6a9683e00000005') 
 Address.extract.address('0x17c4e6453cc49aaaaeaca894e6a9683e00000005') // lowercase
 Address.extract.address({Substrate: 'yGJMj5z32dpBUigGVFgatC382Ti3FNVSKyfgi87UF7f786MJL'})
 Address.extract.address({substrate: 'yGJMj5z32dpBUigGVFgatC382Ti3FNVSKyfgi87UF7f786MJL'})
+Address.extract.address({Substrate: '0x2e61479a581f023808aaa5f2ec90be6c2b250102d99d788bde3c8d4153a0ed08'})
+Address.extract.address({substrate: '0x2e61479a581f023808aaa5f2ec90be6c2b250102d99d788bde3c8d4153a0ed08'})
 Address.extract.address({Ethereum: '0x17c4E6453Cc49aaaaeaca894E6a9683e00000005'})
 Address.extract.address({ethereum: '0x17c4E6453Cc49aaaaeaca894E6a9683e00000005'})
 ```
@@ -606,6 +609,9 @@ Address.extract.address('yGJMj5z32dpBUigGVFgatC382Ti3FNVSKyfgi87UF7f786MJL')
 // yGJMj5z32dpBUigGVFgatC382Ti3FNVSKyfgi87UF7f786MJL
 Address.extract.addressNormalized('yGJMj5z32dpBUigGVFgatC382Ti3FNVSKyfgi87UF7f786MJL')
 // '5HgvUDiRm5yjRSrrG9B6q6km7KLzkXMxvFLHPZpA13pmwCJQ'
+Address.extract.address('0x2e61479a581f023808aaa5f2ec90be6c2b250102d99d788bde3c8d4153a0ed08')
+// '5HgvUDiRm5yjRSrrG9B6q6km7KLzkXMxvFLHPZpA13pmwCJQ' 
+// address extracted from public key is always in normal form (ss58 prefix 42, starts with '5')
 
 Address.extract.address('0x17c4E6453Cc49aaaaeaca894E6a9683e00000005')
 // '0x17c4E6453Cc49aaaaeaca894E6a9683e00000005'
@@ -615,6 +621,7 @@ Address.extract.addressNormalized('0x17c4e6453cc49aaaaeaca894e6a9683e00000005')
 Address.extract.crossAccountId('yGJMj5z32dpBUigGVFgatC382Ti3FNVSKyfgi87UF7f786MJL')
 Address.extract.crossAccountId('yGJMj5z32dpBUigGVFgatC382Ti3FNVSKyfgi87UF7f786MJL')
 Address.extract.crossAccountId({Substrate: 'yGJMj5z32dpBUigGVFgatC382Ti3FNVSKyfgi87UF7f786MJL'})
+Address.extract.crossAccountId({Substrate: '0x2e61479a581f023808aaa5f2ec90be6c2b250102d99d788bde3c8d4153a0ed08'})
 // {Substrate: 'yGJMj5z32dpBUigGVFgatC382Ti3FNVSKyfgi87UF7f786MJL'}
 
 Address.extract.crossAccountIdNormalized('yGJMj5z32dpBUigGVFgatC382Ti3FNVSKyfgi87UF7f786MJL')
@@ -634,6 +641,7 @@ Safe methods don't throw error on invalid input:
 ```ts
 Address.extract.addressSafe('yGJMj5z32dpBUigGVFgatC382Ti3FNVSKyfgi87UF7f786MJL') // returns same string
 Address.extract.addressSafe('yGJMj5z32dpBUigGVFgatC382Ti3FNVSKyfgi87UF7f786MJ')  // returns null
+Address.extract.addressSafe('2e61479a581f023808aaa5f2ec90be6c2b250102d99d788bde3c8d4153a0ed08')  // "0x" prefix is required
 Address.extract.addressSafe('')  // returns null
 Address.extract.addressSafe({})  // returns null
 Address.extract.addressSafe(0)   // returns null
@@ -652,6 +660,7 @@ type EnhancedCrossAccountId = {
   address: string           // in normalized form, for Substrate address it's encoded with ss58Prefix 42 (5...), for Ethereum address it's capitalized
   addressSS58: string       // in SS58 format, makes sense only for Substrate address, encoded in passed format (ss58prefix), for Ethereum address it's the same as `address`
   type: 'Substrate' | 'Ethereum'
+  subtratePublicKey: string | null // depends on passed address type or CrossAccountId contents
   isEthereum: boolean
   isSubstrate: boolean
 }

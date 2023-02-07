@@ -8,18 +8,19 @@ export const guessAddressAndExtractCrossAccountIdUnsafe = (rawAddress: string | 
   const address = rawAddress as any
 
   if (typeof address === 'object') {
-    if (address.hasOwnProperty('Substrate')) {
-      validate.substrateAddress(address.Substrate)
-      return {Substrate: normalize ? normalizeSubstrateAddress(address.Substrate) : address.Substrate}
-    } else if (address.hasOwnProperty('substrate')) {
-      validate.substrateAddress(address.substrate)
-      return {Substrate: normalize ? normalizeSubstrateAddress(address.substrate) : address.substrate}
-    } else if (address.hasOwnProperty('Ethereum')) {
-      validate.ethereumAddress(address.Ethereum)
-      return {Ethereum: normalize ? normalizeEthereumAddress(address.Ethereum) : address.Ethereum}
-    } else if (address.hasOwnProperty('ethereum')) {
-      validate.ethereumAddress(address.ethereum)
-      return {Ethereum: normalize ? normalizeEthereumAddress(address.ethereum) : address.ethereum}
+    if (address.hasOwnProperty('Substrate') || address.hasOwnProperty('substrate')) {
+      const substrateAddress = address.hasOwnProperty('Substrate') ? address.Substrate : address.substrate
+      if (is.substratePublicKey(substrateAddress)) {
+        return {Substrate: normalizeSubstrateAddress(substrateAddress)}
+      } else if (is.substrateAddress(substrateAddress)) {
+        return {Substrate: normalize ? normalizeSubstrateAddress(substrateAddress) : substrateAddress}
+      } else {
+        throw new Error(`Address ${substrateAddress} is not a valid Substrate address`)
+      }
+    } else if (address.hasOwnProperty('Ethereum') || address.hasOwnProperty('ethereum')) {
+      const ethereumAddress = address.hasOwnProperty('Ethereum') ? address.Ethereum : address.ethereum
+      validate.ethereumAddress(ethereumAddress)
+      return {Ethereum: normalize ? normalizeEthereumAddress(ethereumAddress) : ethereumAddress}
     } else {
       throw new Error(`Address ${address} is not a valid crossAccountId object (should contain "Substrate"/"substrate" or "Ethereum"/"ethereum" field)`)
     }
@@ -28,6 +29,7 @@ export const guessAddressAndExtractCrossAccountIdUnsafe = (rawAddress: string | 
   if (typeof address === 'string') {
     if (is.substrateAddress(address)) return {Substrate: normalize ? normalizeSubstrateAddress(address) : address}
     else if (is.ethereumAddress(address)) return {Ethereum: normalize ? normalizeEthereumAddress(address) : address}
+    else if (is.substratePublicKey(address)) return {Substrate: normalizeSubstrateAddress(address)}
     else {
       throw new Error(`Address ${address} is not a valid Substrate or Ethereum address`)
     }
@@ -60,6 +62,7 @@ export const addressInAnyFormToEnhancedCrossAccountId = (address: string | objec
       ...crossAccountId,
       address: normalized,
       addressSS58: normalized,
+      substratePublicKey: null,
       isEthereum: true,
       isSubstrate: false,
       type: 'Ethereum',
@@ -69,6 +72,7 @@ export const addressInAnyFormToEnhancedCrossAccountId = (address: string | objec
       ...crossAccountId,
       address: Address.normalize.substrateAddress(crossAccountId.Substrate as string),
       addressSS58: Address.normalize.substrateAddress(crossAccountId.Substrate as string, ss58Prefix),
+      substratePublicKey: Address.extract.substratePublicKey(crossAccountId.Substrate as string),
       isEthereum: false,
       isSubstrate: true,
       type: 'Substrate',

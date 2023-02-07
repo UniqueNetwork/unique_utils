@@ -89,7 +89,7 @@ export const is = {
   substrateAddress: (address: string): boolean => {
     try {
       decodeSubstrateAddress(address)
-      return true
+      return !is.substratePublicKey(address)
     } catch {
       return false
     }
@@ -226,6 +226,21 @@ export const extract = {
   substrateOrMirrorIfEthereumNormalizedSafe: (addressOrCrossAccountId: string | object): string | null => {
     try {
       return substrateOrMirrorIfEthereum(addressOrCrossAccountId, true)
+    } catch {
+      return null
+    }
+  },
+
+  substratePublicKey: (addressOrCrossAccountId: string | object): string => {
+    const crossAccountId = guessAddressAndExtractCrossAccountIdUnsafe(addressOrCrossAccountId)
+    if (!crossAccountId.Substrate) {
+      throw new Error('Address is not a substrate address')
+    }
+    return substrate.decode(crossAccountId.Substrate).hex
+  },
+  substratePublicKeySafe: (addressOrCrossAccountId: string | object): string | null => {
+    try {
+      return extract.substratePublicKey(addressOrCrossAccountId)
     } catch {
       return null
     }

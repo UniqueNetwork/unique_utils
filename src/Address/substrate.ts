@@ -1,5 +1,5 @@
 import {base58, blake2b} from './imports'
-import {DecodeSubstrateAddressResult, validate} from './index'
+import {DecodeSubstrateAddressResult, validate, is} from './index'
 import {normalizeEthereumAddress} from './ethereum'
 import {HexString} from '../StringUtils'
 
@@ -100,6 +100,15 @@ export function decodeSubstrateAddress(address: string, ignoreChecksum?: boolean
   let realError: Error | null = null
 
   try {
+    if (is.substratePublicKey(address)) {
+      return {
+        u8a: HexString.toU8a(address),
+        bigint: BigInt(address),
+        hex: address,
+        ss58Prefix: 42,
+      }
+    }
+
     const decoded = base58.decode(address);
 
     const allowedEncodedLengths = [3, 4, 6, 10, 35, 36, 37, 38]

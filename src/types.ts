@@ -16,6 +16,7 @@ export type EnhancedCrossAccountId = CrossAccountId & {
   type: AddressType
   isEthereum: boolean
   isSubstrate: boolean
+  substratePublicKey: string | null
 }
 
 
@@ -26,5 +27,3 @@ export type CrossAccountIdUncapitalized =
 
 export type CrossAccountIdOrString = CrossAccountId | string
 export type CrossAccountIdUncapitalizedOrString = CrossAccountIdUncapitalized | string
-
-
