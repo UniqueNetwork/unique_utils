@@ -4,7 +4,7 @@ export const windowIsOkSync = (): boolean => {
   return typeof window !== 'undefined' && !!(window as any).ethereum;
 }
 
-type IEthereumExtensionError = Error & {
+export type IEthereumExtensionError = Error & {
   extensionNotFound: boolean
   userRejected: boolean
 }
@@ -52,7 +52,7 @@ const currentChainIs: Record<UNIQUE_CHAIN, () => boolean> & { anyUniqueChain: (c
     if (!chainId) return false
 
     const chainName: UNIQUE_CHAIN | undefined =
-      chainIdToChainName[typeof chainId === "number" ? chainId : parseInt(chainId, 16)]
+      chainIdToChainName[typeof chainId === 'number' ? chainId : parseInt(chainId, 16)]
 
     return (typeof chainName === 'string')
   }
@@ -113,6 +113,14 @@ const getOrRequestAccounts = async (requestInsteadOfGet: boolean = false): Promi
   }
 }
 
+const getOrRequestAccountsUnsafe = async (requestInsteadOfGet: boolean = false) => {
+  const result = await getOrRequestAccounts(true)
+  if (result.error) {
+    throw result.error
+  } else {
+    return result
+  }
+}
 
 export const addChainToExtension = async (chainData: AddEthereumChainParameter): Promise<void> => {
   const windowIsOk = await documentReadyPromiseAndWindowIsOk()
@@ -139,7 +147,7 @@ export const addChainToExtension = async (chainData: AddEthereumChainParameter):
 
 const UNIQUE_CHAINS_DATA_FOR_EXTENSIONS: Record<UNIQUE_CHAIN, AddEthereumChainParameter> = {
   unique: {
-    chainId: "0x22b0",
+    chainId: '0x22b0',
     chainName: 'Unique',
     nativeCurrency: {
       name: 'Unique',
@@ -151,8 +159,8 @@ const UNIQUE_CHAINS_DATA_FOR_EXTENSIONS: Record<UNIQUE_CHAIN, AddEthereumChainPa
     blockExplorerUrls: ['https://uniquescan.io/unique/'],
   },
   quartz: {
-    chainId: "0x22b1",
-    chainName: "Quartz by Unique",
+    chainId: '0x22b1',
+    chainName: 'Quartz by Unique',
     nativeCurrency: {
       name: 'Quartz',
       symbol: 'QTZ',
@@ -163,8 +171,8 @@ const UNIQUE_CHAINS_DATA_FOR_EXTENSIONS: Record<UNIQUE_CHAIN, AddEthereumChainPa
     blockExplorerUrls: ['https://uniquescan.io/quartz/'],
   },
   opal: {
-    chainId: "0x22b2",
-    chainName: "Opal by Unique",
+    chainId: '0x22b2',
+    chainName: 'Opal by Unique',
     nativeCurrency: {
       name: 'Opal',
       symbol: 'OPL',
@@ -175,8 +183,8 @@ const UNIQUE_CHAINS_DATA_FOR_EXTENSIONS: Record<UNIQUE_CHAIN, AddEthereumChainPa
     blockExplorerUrls: ['https://uniquescan.io/opal/'],
   },
   sapphire: {
-    chainId: "0x22b3",
-    chainName: "Sapphire by Unique",
+    chainId: '0x22b3',
+    chainName: 'Sapphire by Unique',
     nativeCurrency: {
       name: 'Quartz',
       symbol: 'QTZ',
@@ -264,12 +272,12 @@ const parseEthersTxReceipt = <ParsedEvents = any>(tx: ContractReceipt, options =
             : rawValue
           acc[key] = value
           return acc
-        }, {} as {[K: string]: any})
+        }, {} as { [K: string]: any })
     }
   }).reduce((acc, elem) => {
     acc[elem.name] = elem.events
     return acc
-  }, {} as {[K: string]: any}) as ParsedEvents
+  }, {} as { [K: string]: any }) as ParsedEvents
 
   const rawPrice = tx.gasUsed.toBigInt() * tx.effectiveGasPrice.toBigInt()
   const priceStr = rawPrice.toString().padStart(options.decimals + 1, '0')
@@ -295,8 +303,14 @@ export type {UNIQUE_CHAIN}
 
 export const Ethereum = {
   getOrRequestAccounts,
+  getOrRequestAccountsUnsafe,
+
   requestAccounts: () => getOrRequestAccounts(true),
   getAccounts: () => getOrRequestAccounts(),
+
+  requestAccountsUnsafe: getOrRequestAccountsUnsafe(true),
+  getAccountsUnsafe: getOrRequestAccountsUnsafe(),
+
   subscribeOnChanges,
 
   chainNameToChainId,

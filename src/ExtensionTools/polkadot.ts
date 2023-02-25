@@ -2,6 +2,7 @@
 // Polkadot types
 // =========================================
 import {documentReadyPromiseAndWindowIsOk} from './utils'
+
 export type KeypairType = 'ed25519' | 'sr25519' | 'ecdsa' | 'ethereum'
 
 interface InjectedAccount {
@@ -133,26 +134,26 @@ export type IPolkadotExtensionGenericInfo = Pick<IPolkadotExtensionWalletInfo, '
 // =========================================
 // constants
 // =========================================
-const IPFS_GATEWAY = "https://gateway.pinata.cloud/ipfs/"
+const IPFS_GATEWAY = 'https://gateway.pinata.cloud/ipfs/'
 
 const KNOWN_POLKADOT_EXTENSIONS: { [K: string]: { logoIpfsCid: string, prettyName: string, webpage: string } } = {
-  "polkadot-js": {
-    logoIpfsCid: "QmYWczavyNyh3yM56axyyQLgRqcFQYNKe5cDFPfLL94yrz",
-    prettyName: "Polkadot{.js}",
+  'polkadot-js': {
+    logoIpfsCid: 'QmYWczavyNyh3yM56axyyQLgRqcFQYNKe5cDFPfLL94yrz',
+    prettyName: 'Polkadot{.js}',
     webpage: 'https://polkadot.js.org/extension/',
   },
-  "subwallet-js": {
-    logoIpfsCid: "QmZ8BvFzGL5DRugJ3pytc1Jo1rTVYjW3mKUWBx7SvaEsdS",
-    prettyName: "Subwallet",
+  'subwallet-js': {
+    logoIpfsCid: 'QmZ8BvFzGL5DRugJ3pytc1Jo1rTVYjW3mKUWBx7SvaEsdS',
+    prettyName: 'Subwallet',
     webpage: 'https://subwallet.app/',
   },
-  "talisman": {
-    logoIpfsCid: "QmWHn4kVoG43U5coNhoR7Ec3Vus5YPjo9SkMvoiiLoy2bY",
-    prettyName: "Talisman",
+  'talisman': {
+    logoIpfsCid: 'QmWHn4kVoG43U5coNhoR7Ec3Vus5YPjo9SkMvoiiLoy2bY',
+    prettyName: 'Talisman',
     webpage: 'https://talisman.xyz/',
   },
 }
-const FALLBACK_WALLET_LOGO_IPFS_CID = "QmSC1B9X9ugWkfHKtd5guKTidh2qjvgdn8xXzbFrrHMiBM"
+const FALLBACK_WALLET_LOGO_IPFS_CID = 'QmSC1B9X9ugWkfHKtd5guKTidh2qjvgdn8xXzbFrrHMiBM'
 
 const compareTwoStrings = (a: string, b: string): number => a > b ? 1 : a < b ? -1 : 0
 
@@ -319,6 +320,13 @@ const loadWalletByName = async (walletName: string): Promise<IPolkadotExtensionL
   }
 }
 
+export type IPolkadotExtensionLoadWalletsError = {
+  extensionNotFound: boolean
+  accountsNotFound: boolean
+  userHasWalletsButHasNoAccounts: boolean
+  userHasBlockedAllWallets: boolean
+}
+
 export interface IPolkadotExtensionLoadWalletsResult {
   wallets: IPolkadotExtensionWallet[]
   accounts: IPolkadotExtensionAccount[]
@@ -328,23 +336,14 @@ export interface IPolkadotExtensionLoadWalletsResult {
     isBlockedByUser: boolean
   }>
 
-  info: {
-    extensionFound: boolean
-    accountsFound: boolean
-    userHasWalletsButHasNoAccounts: boolean
-    userHasBlockedAllWallets: boolean
-  }
+  error: null | IPolkadotExtensionLoadWalletsError
 }
 
 const loadWallets = async (onlyEnabled: boolean = false): Promise<IPolkadotExtensionLoadWalletsResult> => {
   if (!(await isWeb3Environment())) {
     return {
-      wallets: [], accounts: [], rejectedWallets: [], info: {
-        extensionFound: false,
-        accountsFound: false,
-        userHasWalletsButHasNoAccounts: false,
-        userHasBlockedAllWallets: false,
-      }
+      wallets: [], accounts: [], rejectedWallets: [],
+      error: null
     }
   }
 
@@ -387,12 +386,21 @@ const loadWallets = async (onlyEnabled: boolean = false): Promise<IPolkadotExten
     wallets,
     rejectedWallets,
     accounts,
-    info: {
-      extensionFound: true,
-      accountsFound: !!accounts.length,
+    error: {
+      extensionNotFound: true,
+      accountsNotFound: !!accounts.length,
       userHasWalletsButHasNoAccounts: !!wallets.length && !accounts.length,
       userHasBlockedAllWallets: !wallets.length && !!rejectedWallets.length && rejectedWallets.every(w => w.isBlockedByUser),
     }
+  }
+}
+
+const loadWalletsUnsafe = async (onlyEnabled: boolean = false) => {
+  const result = await loadWallets(onlyEnabled)
+  if (result.error) {
+    throw result.error
+  } else {
+    return result
   }
 }
 
@@ -402,6 +410,9 @@ export const Polkadot = {
 
   enableAndLoadAllWallets: () => loadWallets(false),
   loadEnabledWallets: () => loadWallets(true),
+
+  enableAndLoadAllWalletsUnsafe: () => loadWalletsUnsafe(false),
+  loadEnabledWalletsUnsafe: () => loadWalletsUnsafe(true),
 
   loadWalletByName,
 
