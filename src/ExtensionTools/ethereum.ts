@@ -308,8 +308,8 @@ export const Ethereum = {
   requestAccounts: () => getOrRequestAccounts(true),
   getAccounts: () => getOrRequestAccounts(),
 
-  requestAccountsUnsafe: getOrRequestAccountsUnsafe(true),
-  getAccountsUnsafe: getOrRequestAccountsUnsafe(),
+  requestAccountsUnsafe: () => getOrRequestAccountsUnsafe(true),
+  getAccountsUnsafe: () => getOrRequestAccountsUnsafe(),
 
   subscribeOnChanges,
 
