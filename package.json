@@ -1,6 +1,6 @@
 {
   "name": "@unique-nft/utils",
-  "version": "0.3.8",
+  "version": "0.3.9",
   "main": "index.js",
   "description": "A tiny library to work with Substrate and Ethereum addresses and do some more",
   "keywords": [
