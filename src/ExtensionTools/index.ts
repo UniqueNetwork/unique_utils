@@ -6,7 +6,9 @@ const ExtensionTools = {
   Polkadot,
 }
 
-export {ExtensionTools, Ethereum, Polkadot}
+const UniqueChainName = Ethereum.UniqueChainName
+
+export {ExtensionTools, Ethereum, Polkadot, UniqueChainName}
 
 export default ExtensionTools
 
@@ -15,20 +17,14 @@ export default ExtensionTools
 // =========================================
 
 
-
 export type {
   AddEthereumChainParameter,
   UNIQUE_CHAIN,
   UpdateReason,
-  IEthereumAccountResult,
+  IEthereumExtensionResult,
   IEthereumExtensionError,
+  IEthereumExtensionResultSafe,
 } from './ethereum'
-
-export type IGetAccountsUnsafe = typeof Ethereum.getAccountsUnsafe
-export type IRequestAccountsUnsafe = typeof Ethereum.requestAccountsUnsafe
-
-export type IEnableAndLoadAllWalletsUnsafe = typeof Polkadot.enableAndLoadAllWalletsUnsafe
-export type ILoadEnabledWalletsUnsafe = typeof Polkadot.loadEnabledWalletsUnsafe
 
 export type {
   IPolkadotExtensionWallet,
@@ -37,7 +33,8 @@ export type {
   IPolkadotExtensionGenericInfo,
   IPolkadotExtensionLoadWalletsResult,
   IPolkadotExtensionListWalletsResult,
-  IPolkadotExtensionLoadWalletByNameResult,
+  IPolkadotExtensionLoadWalletsResultSafe,
+  IPolkadotExtensionLoadWalletByNameResultSafe,
   IPolkadotExtensionLoadWalletsError,
   SignerPayloadJSON,
   SignerPayloadRaw,

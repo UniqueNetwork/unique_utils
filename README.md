@@ -91,11 +91,14 @@ const Ethereum = ExtensionTools.Ethereum
 //or
 import {Ethereum} from '@unique-nft/utils/extension'
 
-const {error, address, chainId} = await Ethereum.getAccounts()
+const {address, chainId} = await Ethereum.getAccounts()
+const {result, error} = await Ethereum.getAccountsSafe()
 // or
-const {error, address, chainId} = await Ethereum.requestAccounts()
+const {address, chainId} = await Ethereum.requestAccounts()
+const {result, error} = await Ethereum.requestAccountsSafe()
 // or
-const {error, address, chainId} = await Ethereum.getOrRequestAccounts(boolean) // true - resuest, false - get
+const {address, chainId} = await Ethereum.getOrRequestAccounts(boolean) // true - resuest, false - get
+const {result, error} = await Ethereum.getOrRequestAccountsSafe(boolean) // true - resuest, false - get
 
 //subscribe on chainId or SelectedAddress changes:
 const unsubscribe = Ethereum.subscribeOnChanges(({reason, address, chainId}) => {/*...*/})
@@ -105,9 +108,18 @@ Also, Ethereum extension tool provide some helpers to work with Unique chains.
 All this helpers have all 4 chains, so every helper can be used for `unique`, `quartz`, `opal` and `sapphire`.
 
 ```ts
-Ethereum.currentChainIs.opal() // true - false
+import {Ethereum, UniqueChainName} from '@unique-nft/utils/extension'
+Ethereum.currentChainIs.opal() // boolean
+Ethereum.currentChainIs.byName('opal') // boolean
+Ethereum.currentChainIs.byName(UniqueChainName.opal) // boolean
+
 Ethereum.addChain.quartz()
+Ethereum.addChain.byName('quartz')
+Ethereum.addChain.byName(UniqueChainName.quartz)
+
 Ethereum.switchChainTo.unique()
+Ethereum.switchChainTo.byName('unique')
+Ethereum.switchChainTo.byName(UniqueChainName.unique)
 
 Ethereum.chainNameToChainId.unique // 8880
 Ethereum.chainIdToChainName[8881] // quartz
@@ -121,24 +133,27 @@ If user has already granted access, it will work silently, just like `getAccount
 
 ```ts
 import {Ethereum} from '@unique-nft/utils/extension'
+import {IEthereumExtensionError} from './ethereum'
 
-let {error, address, chainId} = await Ethereum.requestAccounts()
-
-if (address) {
-  //woohoo, let's create a Web3 Provider like that:
+try {
+  const {address, chainId} = await Ethereum.requgestAccounts()
   let provider = new ethers.providers.Web3Provider(window.ethereum)
   console.log(ethers.utils.formatEther(await provider.getBalance(result.selectedAddress)))
-} else {
-  if (error) {
-    if (error.extensionNotFound) {
-      alert(`Please install some ethereum browser extension`)  
-    } else if (error.userRejected) {
-      alert(`But whyyyyyyy?`)
-    } else {
-      alert(`Connection to ethereum extension failed: ${error.message}`)
-    }
+} catch (e: IEthereumExtensionError) {
+  /* note:
+  if we call Ethereum.getAccounts(), there may be one more type of error: 
+  
+  if (e.needToRequestAccess){
+    alert(`Please, grant access to your account`)
+    await Ethereum.requestAccounts()
+  }
+  */
+  if (e.extensionNotFound) {
+    alert(`Please install some ethereum browser extension`)
+  } else if (e.userRejected) {
+    alert(`But whyyyyyyy?`)
   } else {
-    alert('Please, create some account or grant permissions for an account')
+    alert(`Connection to ethereum extension failed: ${e.message}`)
   }
 }
 ```
@@ -163,12 +178,23 @@ from `@unique-nft/utils/extension` because they are not available at `@unique-nf
 import {ExtensionTools} from '@unique-nft/utils/extension'
 //or
 import {Polkadot} from '@unique-nft/utils/extension'
-
-const result = await Polkadot.enableAndLoadAllWallets()
-
-result.info.extensionFound // boolean, in Node.js it's always false.
-
-result.accounts[0].address // string
+try {
+  const result = await Polkadot.enableAndLoadAllWallets()
+  result.accounts[0].address // string
+} catch(e) {
+  if (e.extensionNotFound) {
+    alert(`Please install some polkadot.js compatible extension`)
+  } else if (e.accountsNotFound) {
+    if (e.userHasWalletsButHasNoAccounts) {
+      alert(`Please, create an account in your wallet`)
+    } else if (e.userHasBlockedAllWallets) {
+      alert(`Please, grant access to at least one of your accounts`)
+      await Polkadot.requestAccounts()
+    }
+  } else {
+    alert(`Connection to polkadot extension failed: ${e.message}`)
+  }
+}
 ```
 
 Also, it contains ready signer object for the [Unique SDK](https://www.npmjs.com/package/@unique-nft/sdk):
@@ -182,7 +208,7 @@ const account = accounts[0] // For the simplicity
 
 const sdk = new Sdk({
   baseUrl: 'https://rest.opal.uniquenetwork.dev/v1',
-  signer: account.uniqueSdkSigner
+  signer: account.signer
 })
 
 // or provide it (or override default one) on demand with specific request:
@@ -194,7 +220,7 @@ const result = await sdkWithoutSigner.balance.transfer.submitWaitResult({
   address: account.address,
   destination: "5..." // some another address
 }, {
-  signer: account.uniqueSdkSigner
+  signer: account.signer
 })
 ```
 
@@ -204,29 +230,20 @@ const result = await sdkWithoutSigner.balance.transfer.submitWaitResult({
 
 ```ts
 export interface IPolkadotExtensionLoadWalletsResult {
-  info: {
-    extensionFound: boolean
-    accountsFound: boolean
-    userHasWalletsButHasNoAccounts: boolean
-    userHasBlockedAllWallets: boolean
-  }
-
-  accounts: IPolkadotExtensionAccount[]
-  
   wallets: IPolkadotExtensionWallet[]
+  accounts: IPolkadotExtensionAccount[]
 
-  rejectedWallets: Array<{
-    name: string
-    version: string
-    isEnabled: boolean | undefined
-    prettyName: string
-    logo: {
-      ipfsCid: string,
-      url: string,
-    }
+  rejectedWallets: Array<IPolkadotExtensionWalletInfo & {
     error: Error
     isBlockedByUser: boolean
   }>
+}
+
+export type IPolkadotExtensionLoadWalletsError = Error & {
+  extensionNotFound: boolean
+  accountsNotFound: boolean
+  userHasWalletsButHasNoAccounts: boolean
+  userHasBlockedAllWallets: boolean
 }
 ```
 
@@ -254,8 +271,9 @@ export interface IPolkadotExtensionAccount extends Omit<Signer, 'signRaw'> {
   signPayload: (payload: SignerPayloadJSON) => Promise<SignerResult>
   update?: (id: number, status: any) => void
 
-  uniqueSdkSigner: {
-    sign: (unsignedTxPayload: SDK_UnsignedTxPayloadBody) => Promise<SDK_SignTxResultResponse>
+  signer: {
+    address: string
+    sign: (unsignedTxPayload: UNIQUE_SDK_UnsignedTxPayloadBody) => Promise<UNIQUE_SDK_SignTxResultResponse>
   }
 
   meta: {
@@ -266,3 +284,4 @@ export interface IPolkadotExtensionAccount extends Omit<Signer, 'signRaw'> {
   type: KeypairType // 'ed25519' | 'sr25519' | 'ecdsa' | 'ethereum'
 }
 ```
+g

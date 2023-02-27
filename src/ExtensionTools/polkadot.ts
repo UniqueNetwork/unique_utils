@@ -114,7 +114,8 @@ export interface IPolkadotExtensionAccount extends Omit<Signer, 'signRaw'> {
   signRaw: (raw: SignerPayloadRawWithAddressAndTypeOptional | string) => Promise<SignerResult>
   // signPayload and update are inherited from Signer
 
-  uniqueSdkSigner: {
+  signer: {
+    address: string
     sign: (unsignedTxPayload: UNIQUE_SDK_UnsignedTxPayloadBody) => Promise<UNIQUE_SDK_SignTxResultResponse>
   }
 
@@ -225,7 +226,7 @@ const listWallets = async (): Promise<IPolkadotExtensionListWalletsResult> => {
   }
 }
 
-export type IPolkadotExtensionLoadWalletByNameResult = {
+export type IPolkadotExtensionLoadWalletByNameResultSafe = {
   result: IPolkadotExtensionWallet
   error: null
 } | {
@@ -233,7 +234,7 @@ export type IPolkadotExtensionLoadWalletByNameResult = {
   error: Error
 }
 
-const loadWalletByName = async (walletName: string): Promise<IPolkadotExtensionLoadWalletByNameResult> => {
+const loadWalletByNameSafe = async (walletName: string): Promise<IPolkadotExtensionLoadWalletByNameResultSafe> => {
   if (!(await isWeb3Environment())) {
     return {result: null, error: new Error(`now injected web3 found or environment not a browser`)}
   }
@@ -269,8 +270,8 @@ const loadWalletByName = async (walletName: string): Promise<IPolkadotExtensionL
           }
 
           const payload: SignerPayloadRaw = typeof payloadRaw === 'string'
-            ? {address: account.address, data: payloadRaw, type: 'bytes'}
-            : {address: account.address, ...payloadRaw, type: payloadRaw.type || 'bytes'}
+            ? {address, data: payloadRaw, type: 'bytes'}
+            : {address, ...payloadRaw, type: payloadRaw.type || 'bytes'}
 
           return wallet.signer.signRaw(payload)
         }
@@ -278,10 +279,11 @@ const loadWalletByName = async (walletName: string): Promise<IPolkadotExtensionL
           if (!wallet.signer.signPayload) {
             throw new Error(`no signPayload in the wallet ${walletName}`)
           }
-          return wallet.signer.signPayload({address: account.address, ...payloadJSON,})
+          return wallet.signer.signPayload({address, ...payloadJSON,})
         }
 
-        const uniqueSdkSigner = {
+        const signer = {
+          address,
           sign: async (unsignedTxPayload: UNIQUE_SDK_UnsignedTxPayloadBody): Promise<UNIQUE_SDK_SignTxResultResponse> => {
             const signatureResult = await signPayload(unsignedTxPayload.signerPayloadJSON)
             return {
@@ -308,7 +310,7 @@ const loadWalletByName = async (walletName: string): Promise<IPolkadotExtensionL
           signPayload,
           update: wallet.signer.update,
 
-          uniqueSdkSigner,
+          signer,
         }
 
         return enhancedAccount
@@ -320,7 +322,15 @@ const loadWalletByName = async (walletName: string): Promise<IPolkadotExtensionL
   }
 }
 
-export type IPolkadotExtensionLoadWalletsError = {
+const loadWalletByName = async (walletName: string): Promise<IPolkadotExtensionWallet> => {
+  const {result, error} = await loadWalletByNameSafe(walletName)
+  if (error) {
+    throw error
+  }
+  return result!
+}
+
+export type IPolkadotExtensionLoadWalletsError = Error & {
   extensionNotFound: boolean
   accountsNotFound: boolean
   userHasWalletsButHasNoAccounts: boolean
@@ -335,23 +345,34 @@ export interface IPolkadotExtensionLoadWalletsResult {
     error: Error
     isBlockedByUser: boolean
   }>
-
-  error: null | IPolkadotExtensionLoadWalletsError
 }
 
+/**
+ * Load all wallets and accounts
+ * @param onlyEnabled
+ * @returns {Promise<IPolkadotExtensionLoadWalletsResult>}
+ * @throws {IPolkadotExtensionLoadWalletsError}
+ */
 const loadWallets = async (onlyEnabled: boolean = false): Promise<IPolkadotExtensionLoadWalletsResult> => {
+  if (!(await documentReadyPromiseAndWindowIsOk())) {
+    return {wallets: [], accounts: [], rejectedWallets: []}
+  }
   if (!(await isWeb3Environment())) {
-    return {
-      wallets: [], accounts: [], rejectedWallets: [],
-      error: null
-    }
+    const error = new Error(`No injected web3 found`) as IPolkadotExtensionLoadWalletsError
+
+    error.extensionNotFound = true
+    error.accountsNotFound = false
+    error.userHasWalletsButHasNoAccounts = false
+    error.userHasBlockedAllWallets = false
+
+    throw error
   }
 
   const allWallets = await Promise.all((await listWallets()).wallets
     .filter(wallet => !onlyEnabled || wallet.isEnabled)
     .map(async (wallet) => ({
       info: wallet,
-      enabled: await loadWalletByName(wallet.name)
+      enabled: await loadWalletByNameSafe(wallet.name)
     }))
   )
 
@@ -382,39 +403,51 @@ const loadWallets = async (onlyEnabled: boolean = false): Promise<IPolkadotExten
       compareTwoStrings(a.wallet.name + a.name + a.address, b.wallet.name + b.name + b.address)
     )
 
+  if (!accounts.length) {
+    const error = new Error(`No accounts found`) as IPolkadotExtensionLoadWalletsError
+
+    error.extensionNotFound = false
+    error.accountsNotFound = true
+    error.userHasWalletsButHasNoAccounts = !!wallets.length
+    error.userHasBlockedAllWallets = !wallets.length && !!rejectedWallets.length && rejectedWallets.every(w => w.isBlockedByUser)
+
+    throw error
+  }
+
   return {
     wallets,
     rejectedWallets,
     accounts,
-    error: {
-      extensionNotFound: true,
-      accountsNotFound: !!accounts.length,
-      userHasWalletsButHasNoAccounts: !!wallets.length && !accounts.length,
-      userHasBlockedAllWallets: !wallets.length && !!rejectedWallets.length && rejectedWallets.every(w => w.isBlockedByUser),
-    }
   }
 }
 
-const loadWalletsUnsafe = async (onlyEnabled: boolean = false) => {
-  const result = await loadWallets(onlyEnabled)
-  if (result.error) {
-    throw result.error
-  } else {
-    return result
+export type IPolkadotExtensionLoadWalletsResultSafe = {
+  result: IPolkadotExtensionLoadWalletsResult
+  error: null
+} | {
+  result: null
+  error: IPolkadotExtensionLoadWalletsError
+}
+
+const loadWalletsSafe = async (onlyEnabled: boolean = false): Promise<IPolkadotExtensionLoadWalletsResultSafe> => {
+  try {
+    return {result: await loadWallets(onlyEnabled), error: null}
+  } catch (e: any) {
+    return {result: null, error: e}
   }
 }
 
 export const Polkadot = {
-  isWeb3Environment,
   listWallets,
 
   enableAndLoadAllWallets: () => loadWallets(false),
   loadEnabledWallets: () => loadWallets(true),
 
-  enableAndLoadAllWalletsUnsafe: () => loadWalletsUnsafe(false),
-  loadEnabledWalletsUnsafe: () => loadWalletsUnsafe(true),
+  enableAndLoadAllWalletsSafe: () => loadWalletsSafe(false),
+  loadEnabledWalletsSafe: () => loadWalletsSafe(true),
 
   loadWalletByName,
+  loadWalletByNameSafe,
 
   constants: {
     knownPolkadotExtensions,

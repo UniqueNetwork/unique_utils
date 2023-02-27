@@ -4,11 +4,6 @@ export const windowIsOkSync = (): boolean => {
   return typeof window !== 'undefined' && !!(window as any).ethereum;
 }
 
-export type IEthereumExtensionError = Error & {
-  extensionNotFound: boolean
-  userRejected: boolean
-}
-
 export interface AddEthereumChainParameter {
   chainId: string // A 0x-prefixed hexadecimal string
   chainName: string
@@ -22,7 +17,16 @@ export interface AddEthereumChainParameter {
   iconUrls?: string[] // Currently ignored
 }
 
-type UNIQUE_CHAIN = 'unique' | 'quartz' | 'opal' | 'sapphire'
+export type UNIQUE_CHAIN = 'unique' | 'quartz' | 'opal' | 'sapphire'
+const UNIQUE_CHAINS: UNIQUE_CHAIN[] = ['unique', 'quartz', 'opal', 'sapphire']
+const UNIQUE_CHAIN_IDS: number[] = [8880, 8881, 8882, 8883]
+
+const UniqueChainName: Record<UNIQUE_CHAIN, UNIQUE_CHAIN> = {
+  unique: 'unique',
+  quartz: 'quartz',
+  opal: 'opal',
+  sapphire: 'sapphire',
+}
 const chainNameToChainId: Record<UNIQUE_CHAIN, number> = {
   unique: 8880,
   quartz: 8881,
@@ -43,57 +47,74 @@ const isUniqueChainFactory = (chainName: UNIQUE_CHAIN) => (): boolean => {
   const chainId = parseInt((window as any).ethereum.chainId, 16)
   return chainId === chainNameToChainId[chainName]
 }
-const currentChainIs: Record<UNIQUE_CHAIN, () => boolean> & { anyUniqueChain: (chainId: string | number) => boolean } = {
+const currentChainIs: Record<UNIQUE_CHAIN, () => boolean> & {
+  anyUniqueChain: (chainId: string | number) => boolean
+  byName: (chainName: string) => boolean
+} = {
   unique: isUniqueChainFactory('unique'),
   quartz: isUniqueChainFactory('quartz'),
   opal: isUniqueChainFactory('opal'),
   sapphire: isUniqueChainFactory('sapphire'),
+  byName: (chainName: string) => {
+    if (!UNIQUE_CHAINS.includes(chainName as UNIQUE_CHAIN)) {
+      throw new Error(`Invalid chain name: ${chainName}`)
+    }
+    return isUniqueChainFactory(chainName as UNIQUE_CHAIN)()
+  },
   anyUniqueChain: (chainId: string | number | null | undefined): boolean => {
     if (!chainId) return false
 
-    const chainName: UNIQUE_CHAIN | undefined =
-      chainIdToChainName[typeof chainId === 'number' ? chainId : parseInt(chainId, 16)]
-
-    return (typeof chainName === 'string')
+    // check if chain id is in the list of unique chains in string or number format
+    return (
+      (typeof chainId === 'string' && UNIQUE_CHAINS.includes(chainId as UNIQUE_CHAIN)) ||
+      (typeof chainId === 'number' && UNIQUE_CHAIN_IDS.includes(chainId))
+    )
   }
 }
 
 
-export type IEthereumAccountResult = {
+export type IEthereumExtensionResult = {
   address: string
   chainId: number
-  error: null
-} | {
-  address: null
-  chainId: number | null
-  error: IEthereumExtensionError
 }
 
-const getOrRequestAccounts = async (requestInsteadOfGet: boolean = false): Promise<IEthereumAccountResult> => {
+export type IEthereumExtensionError = Error & {
+  extensionNotFound: boolean
+  userRejected: boolean
+  needToRequestAccess: boolean
+  chainId: number | null
+}
+
+/**
+ * @param requestInsteadOfGet - if true, will call eth_requestAccounts instead of eth_accounts
+ * @returns {Promise<IEthereumExtensionResult>}
+ * @throws {IEthereumExtensionError}
+ */
+const getOrRequestAccounts = async (requestInsteadOfGet: boolean = false): Promise<IEthereumExtensionResult> => {
   const windowIsOk = await documentReadyPromiseAndWindowIsOk()
-  if (!windowIsOk || !(window as any).ethereum) {
+
+  if (!windowIsOk) {
+    // silently return empty result in non browser environment (e.g. nodejs)
+    // to not bother if someone is using this lib in nodejs
+    return {address: '', chainId: 0}
+  }
+
+  if (!(window as any).ethereum) {
     const error = new Error('No extension found') as IEthereumExtensionError
     error.extensionNotFound = true
     error.userRejected = false
+    error.needToRequestAccess = false
+    error.chainId = null
 
-    return {
-      address: null,
-      chainId: null,
-      error
-    }
+    throw error
   }
 
   const ethereum = (window as any).ethereum
   let accounts: string[] = []
+  let chainId: number | null = null
   try {
     accounts = await ethereum.request({method: requestInsteadOfGet ? 'eth_requestAccounts' : 'eth_accounts'})
-    const chainId = parseInt(ethereum.chainId, 16)
-
-    return {
-      address: accounts[0],
-      chainId,
-      error: null
-    }
+    chainId = parseInt(ethereum.chainId, 16)
   } catch (_error: any) {
     // EIP-1193 userRejectedRequest error code is 4001
     // If this happens, the user rejected the connection request.
@@ -101,24 +122,43 @@ const getOrRequestAccounts = async (requestInsteadOfGet: boolean = false): Promi
     const error = _error as IEthereumExtensionError
     error.userRejected = _error.code === 4001
     error.extensionNotFound = false
+    error.needToRequestAccess = false
 
     const chainIdStr = (window as any).ethereum?.chainId
-    const chainId = typeof chainIdStr === 'string' ? parseInt(chainIdStr, 16) : NaN
+    error.chainId = typeof chainIdStr === 'string' ? parseInt(chainIdStr, 16) : NaN
 
-    return {
-      address: null,
-      chainId: isNaN(chainId) ? null : chainId,
-      error,
-    }
+    throw error
+  }
+
+  const account = accounts[0]
+  if (!account) {
+    const error = new Error('Need to request account') as IEthereumExtensionError
+    error.extensionNotFound = false
+    error.userRejected = false
+    error.needToRequestAccess = true
+    error.chainId = chainId
+
+    throw error
+  }
+  return {
+    address: accounts[0],
+    chainId,
   }
 }
 
-const getOrRequestAccountsUnsafe = async (requestInsteadOfGet: boolean = false) => {
-  const result = await getOrRequestAccounts(true)
-  if (result.error) {
-    throw result.error
-  } else {
-    return result
+export type IEthereumExtensionResultSafe = {
+  result: IEthereumExtensionResult
+  error: null
+} | {
+  result: null
+  error: IEthereumExtensionError
+}
+
+const getOrRequestAccountsSafe = async (requestInsteadOfGet: boolean = false): Promise<IEthereumExtensionResultSafe> => {
+  try {
+    return {result: await getOrRequestAccounts(requestInsteadOfGet), error: null}
+  } catch (error: any) {
+    return {result: null, error}
   }
 }
 
@@ -196,12 +236,21 @@ const UNIQUE_CHAINS_DATA_FOR_EXTENSIONS: Record<UNIQUE_CHAIN, AddEthereumChainPa
   },
 }
 
-const addChain: Record<UNIQUE_CHAIN, () => Promise<void>> & { anyChain: (chainData: AddEthereumChainParameter) => Promise<void> } = {
+const addChain: Record<UNIQUE_CHAIN, () => Promise<void>> & {
+  anyChain: (chainData: AddEthereumChainParameter) => Promise<void>
+  byName: (chainName: string) => Promise<void>
+} = {
   unique: () => addChainToExtension(UNIQUE_CHAINS_DATA_FOR_EXTENSIONS.unique),
   quartz: () => addChainToExtension(UNIQUE_CHAINS_DATA_FOR_EXTENSIONS.quartz),
   opal: () => addChainToExtension(UNIQUE_CHAINS_DATA_FOR_EXTENSIONS.opal),
   sapphire: () => addChainToExtension(UNIQUE_CHAINS_DATA_FOR_EXTENSIONS.sapphire),
   anyChain: (chainData: AddEthereumChainParameter) => addChainToExtension(chainData),
+  byName: (chainName: string) => {
+    if (!UNIQUE_CHAINS.includes(chainName as UNIQUE_CHAIN)) {
+      throw new Error(`Invalid chain name: ${chainName}`)
+    }
+    return addChainToExtension(UNIQUE_CHAINS_DATA_FOR_EXTENSIONS[chainName as UNIQUE_CHAIN])
+  },
 }
 
 const switchToChain = async (chainId: number | string): Promise<void> => {
@@ -212,46 +261,51 @@ const switchToChain = async (chainId: number | string): Promise<void> => {
 
   await (window as any).ethereum.request({method: 'wallet_switchEthereumChain', params: [{chainId: parsedChainId}]})
 }
-const switchChainTo: Record<UNIQUE_CHAIN, () => Promise<void>> & { anyChain: (chainId: number | string) => Promise<void> } = {
+const switchChainTo: Record<UNIQUE_CHAIN, () => Promise<void>> & {
+  anyChain: (chainId: number | string) => Promise<void>
+  byName: (chainName: string) => Promise<void>
+} = {
   unique: () => switchToChain(chainNameToChainId.unique),
   quartz: () => switchToChain(chainNameToChainId.quartz),
   opal: () => switchToChain(chainNameToChainId.opal),
   sapphire: () => switchToChain(chainNameToChainId.sapphire),
-  anyChain: (chainId) => switchToChain(chainId)
+  anyChain: (chainId) => switchToChain(chainId),
+  byName: (chainName) => {
+    if (!UNIQUE_CHAINS.includes(chainName as UNIQUE_CHAIN)) {
+      throw new Error(`Invalid chain name: ${chainName}`)
+    }
+    return switchToChain(chainNameToChainId[chainName as UNIQUE_CHAIN])
+  },
 }
 
 export type UpdateReason = 'account' | 'chain'
 
-const subscribeOnChanges = (cb: (result: { reason: UpdateReason, chainId: number | null, address: string | null }) => void): (() => void) => {
+const subscribeOnChanges = (cb: (result: { reason: UpdateReason, chainId: number, address: string }) => void): (() => void) => {
   if (typeof window === 'undefined' || !(window as any).ethereum) {
     return () => undefined
   }
 
   const ethereum = (window as any).ethereum
 
-  const getAccounts = (reason: UpdateReason) => {
+  const refresh = (reason: UpdateReason) => {
     if (ethereum.chainId && ethereum.selectedAddress) {
       cb({reason, address: ethereum.selectedAddress, chainId: parseInt(ethereum.chainId, 16)})
     } else {
-      getOrRequestAccounts().then(({chainId, address, error}) => {
-        if (error) {
-          throw error
-        }
-
+      getAccounts().then(({chainId, address}) => {
         cb({reason, chainId, address})
-      })
+      }).catch((e) => console.error(`Error during attempt to update account info in subscribeOnChanges`, e))
     }
   }
 
   ethereum.on('accountsChanged', () => {
-    getAccounts('account')
+    refresh('account')
   })
   ethereum.on('chainChanged', () => {
-    getAccounts('chain')
+    refresh('chain')
   })
   return () => {
-    ethereum.removeListener('accountsChanged', getAccounts)
-    ethereum.removeListener('networkChanged', getAccounts)
+    ethereum.removeListener('accountsChanged', refresh)
+    ethereum.removeListener('networkChanged', refresh)
   }
 }
 
@@ -299,17 +353,27 @@ const parseEthersTxReceipt = <ParsedEvents = any>(tx: ContractReceipt, options =
   }
 }
 
-export type {UNIQUE_CHAIN}
+/**
+ * @returns {Promise<IEthereumExtensionResult>}
+ * @throws {IEthereumExtensionError}
+ */
+const requestAccounts = () => getOrRequestAccounts(true)
+
+/**
+ * @returns {Promise<IEthereumExtensionResult>}
+ * @throws {IEthereumExtensionError}
+ */
+const getAccounts = () => getOrRequestAccounts()
 
 export const Ethereum = {
   getOrRequestAccounts,
-  getOrRequestAccountsUnsafe,
+  getOrRequestAccountsSafe,
 
-  requestAccounts: () => getOrRequestAccounts(true),
-  getAccounts: () => getOrRequestAccounts(),
+  requestAccounts,
+  getAccounts,
 
-  requestAccountsUnsafe: () => getOrRequestAccountsUnsafe(true),
-  getAccountsUnsafe: () => getOrRequestAccountsUnsafe(),
+  requestAccountsSafe: () => getOrRequestAccountsSafe(true),
+  getAccountsSafe: () => getOrRequestAccountsSafe(),
 
   subscribeOnChanges,
 
@@ -321,6 +385,10 @@ export const Ethereum = {
   switchChainTo,
 
   UNIQUE_CHAINS_DATA_FOR_EXTENSIONS,
+
+  UNIQUE_CHAINS,
+  UNIQUE_CHAIN_IDS,
+  UniqueChainName,
 
   parseEthersTxReceipt,
 }
