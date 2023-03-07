@@ -8,10 +8,15 @@ export const guessAddressAndExtractCrossAccountIdUnsafe = (rawAddress: string | 
 
   if (typeof address === 'object') {
     if (address.hasOwnProperty('eth') && address.hasOwnProperty('sub')) {
-      const subBigInt = (address.sub.hasOwnProperty('toBigInt') && typeof address.sub.toBigInt === 'function')
-        ? address.sub.toBigInt()
-        : BigInt(address.sub)
+      // bn.js value extraction for ethers.js
+      const subPublicKey = (address.sub.hasOwnProperty('_hex') && typeof address.sub._hex === 'string')
+        ? address.sub._hex
+        : address.sub
+      if (typeof subPublicKey !== 'string' || !subPublicKey.startsWith('0x')) {
+        throw new Error(`Substrate public key must be a hex string, got ${subPublicKey}`)
+      }
 
+      const subBigInt = BigInt(subPublicKey)
       const ethBigInt = BigInt(address.eth)
 
       if (!(Number(subBigInt === 0n) ^ Number(ethBigInt === 0n))) {
@@ -22,7 +27,7 @@ export const guessAddressAndExtractCrossAccountIdUnsafe = (rawAddress: string | 
       if (subBigInt === 0n) {
         return {Ethereum: normalizeEthereumAddress(address.eth)}
       } else {
-        return {Substrate: normalizeSubstrateAddress(address.sub)}
+        return {Substrate: normalizeSubstrateAddress(subPublicKey)}
       }
     } else if (address.hasOwnProperty('Substrate') || address.hasOwnProperty('substrate')) {
       const substrateAddress = address.hasOwnProperty('Substrate') ? address.Substrate : address.substrate
