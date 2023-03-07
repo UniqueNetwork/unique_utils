@@ -612,11 +612,20 @@ Address.extract.addressNormalized('yGJMj5z32dpBUigGVFgatC382Ti3FNVSKyfgi87UF7f78
 Address.extract.address('0x2e61479a581f023808aaa5f2ec90be6c2b250102d99d788bde3c8d4153a0ed08')
 // '5HgvUDiRm5yjRSrrG9B6q6km7KLzkXMxvFLHPZpA13pmwCJQ' 
 // address extracted from public key is always in normal form (ss58 prefix 42, starts with '5')
+Address.extract.address({
+  sub: '0x2e61479a581f023808aaa5f2ec90be6c2b250102d99d788bde3c8d4153a0ed08',
+  eth: '0x0000000000000000000000000000000000000000'
+}) // '5HgvUDiRm5yjRSrrG9B6q6km7KLzkXMxvFLHPZpA13pmwCJQ'
+
 
 Address.extract.address('0x17c4E6453Cc49aaaaeaca894E6a9683e00000005')
 // '0x17c4E6453Cc49aaaaeaca894E6a9683e00000005'
 Address.extract.addressNormalized('0x17c4e6453cc49aaaaeaca894e6a9683e00000005')
 // '0x17c4E6453Cc49aaaaeaca894E6a9683e00000005'
+Address.extract.address({
+  sub: '0x00',
+  eth: '0x17c4e6453cc49aaaaeaca894e6a9683e00000005'
+}) // '0x17c4E6453Cc49aaaaeaca894E6a9683e00000005' // eth address is always normalized when extracted from EthCrossAccountId
 
 Address.extract.crossAccountId('yGJMj5z32dpBUigGVFgatC382Ti3FNVSKyfgi87UF7f786MJL')
 Address.extract.crossAccountId('yGJMj5z32dpBUigGVFgatC382Ti3FNVSKyfgi87UF7f786MJL')
@@ -646,6 +655,29 @@ Address.extract.addressSafe('')  // returns null
 Address.extract.addressSafe({})  // returns null
 Address.extract.addressSafe(0)   // returns null
 Address.extract.addressSafe()    // returns null
+```
+
+EthCrossAccountId addresses should contain one of the addresses zero address, and the other one should be non-zero:
+
+```ts
+Address.extract.address({
+  sub: '0x00',
+  eth: '0x0000000000000000000000000000000000000000'
+}) // throws an error
+Address.extract.address({
+  sub: '0x2e61479a581f023808aaa5f2ec90be6c2b250102d99d788bde3c8d4153a0ed08',
+  eth: '0x17c4e6453cc49aaaaeaca894e6a9683e00000005'
+}) // throws an error
+
+// one of the addresses should be zero address:
+Address.extract.address({
+  sub: '0x2e61479a581f023808aaa5f2ec90be6c2b250102d99d788bde3c8d4153a0ed08',
+  eth: '0x0000000000000000000000000000000000000000'
+}) // '5HgvUDiRm5yjRSrrG9B6q6km7KLzkXMxvFLHPZpA13pmwCJQ'
+Address.extract.address({
+  sub: '0x00',
+  eth: '0x17c4e6453cc49aaaaeaca894e6a9683e00000005'
+}) // '0x17c4E6453Cc49aaaaeaca894E6a9683e00000005' // eth address is always normalized when extracted from EthCrossAccountId
 ```
 
 #### enhancedCrossAccountId
@@ -755,6 +787,39 @@ Address.to.substrateOrMirrorIfEthereum(55) // throws an error
 Address.to.substrateOrMirrorIfEthereum([]) // throws an error
 ```
 
+#### ethCrossAccountId
+#### ethCrossAccountIdSafe
+
+This method converts a Substrate or Ethereum address to an EthCrossAccountId object.
+Input: address in any form
+Output: EthCrossAccountId object
+
+```ts
+ethCrossAccountId: (address: string | object) => EthCrossAccountId
+ethCrossAccountIdSafe: (address: string | object) => EthCrossAccountId | null
+```
+
+Examples:
+
+```ts
+import {Address} from './index'
+
+Address.extract.ethCrossAccountId('yGJMj5z32dpBUigGVFgatC382Ti3FNVSKyfgi87UF7f786MJL')
+// returns
+// {
+//   sub: '0x2e61479a581f023808aaa5f2ec90be6c2b250102d99d788bde3c8d4153a0ed08',
+//   eth: '0x0000000000000000000000000000000000000000'
+// }
+
+Address.extract.ethCrossAccountId('0x17c4e6453cc49aaaaeaca894e6a9683e00000005')
+// returns
+// {
+//   sub: '0x00',
+//   eth: '0x17c4E6453Cc49aaaaeaca894E6a9683e00000005' // normalized
+// }
+```
+
+Safe method works the same way but returns null if the input is invalid.
 
 ### mirror
 

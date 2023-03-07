@@ -1,3 +1,5 @@
+import {s} from 'vitest/dist/global-d05ffb3f'
+
 export type SubAddressObj = { Substrate: string }
 export type SubAddressObjUncapitalized = { substrate: string }
 export type EthAddressObj = { Ethereum: string }
@@ -16,7 +18,7 @@ export type EnhancedCrossAccountId = CrossAccountId & {
   type: AddressType
   isEthereum: boolean
   isSubstrate: boolean
-  substratePublicKey: string | null
+  substratePublicKey: string
 }
 
 
@@ -27,3 +29,5 @@ export type CrossAccountIdUncapitalized =
 
 export type CrossAccountIdOrString = CrossAccountId | string
 export type CrossAccountIdUncapitalizedOrString = CrossAccountIdUncapitalized | string
+
+export type EthCrossAccountId = {eth: string, sub: string}

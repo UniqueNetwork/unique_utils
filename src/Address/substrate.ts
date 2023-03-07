@@ -107,6 +107,8 @@ export function decodeSubstrateAddress(address: string, ignoreChecksum?: boolean
         hex: address,
         ss58Prefix: 42,
       }
+    } else if (address.startsWith('0x')) {
+      throw new Error(`Invalid substrate address, received ${address}. Wrong or mangled public key?`)
     }
 
     const decoded = base58.decode(address);

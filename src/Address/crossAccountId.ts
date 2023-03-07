@@ -1,14 +1,30 @@
 import {normalizeEthereumAddress} from './ethereum'
-import {normalizeSubstrateAddress} from './substrate'
+import {normalizeSubstrateAddress, decodeSubstrateAddress} from './substrate'
 import {CrossAccountId, EnhancedCrossAccountId} from '../types'
-import {is, mirror, normalize, validate} from './index'
-import {Address} from "../index";
+import {is, mirror, validate} from './index'
 
 export const guessAddressAndExtractCrossAccountIdUnsafe = (rawAddress: string | object, normalize: boolean = false): CrossAccountId => {
   const address = rawAddress as any
 
   if (typeof address === 'object') {
-    if (address.hasOwnProperty('Substrate') || address.hasOwnProperty('substrate')) {
+    if (address.hasOwnProperty('eth') && address.hasOwnProperty('sub')) {
+      const subBigInt = (address.sub.hasOwnProperty('toBigInt') && typeof address.sub.toBigInt === 'function')
+        ? address.sub.toBigInt()
+        : BigInt(address.sub)
+
+      const ethBigInt = BigInt(address.eth)
+
+      if (!(Number(subBigInt === 0n) ^ Number(ethBigInt === 0n))) {
+        throw new Error(`One of the addresses must be 0, got eth ${address.eth} and substrate public key ${address.sub}.`)
+      }
+
+      // always normalize addresses from the EthCrossAccountId
+      if (subBigInt === 0n) {
+        return {Ethereum: normalizeEthereumAddress(address.eth)}
+      } else {
+        return {Substrate: normalizeSubstrateAddress(address.sub)}
+      }
+    } else if (address.hasOwnProperty('Substrate') || address.hasOwnProperty('substrate')) {
       const substrateAddress = address.hasOwnProperty('Substrate') ? address.Substrate : address.substrate
       if (is.substratePublicKey(substrateAddress)) {
         return {Substrate: normalizeSubstrateAddress(substrateAddress)}
@@ -22,7 +38,7 @@ export const guessAddressAndExtractCrossAccountIdUnsafe = (rawAddress: string | 
       validate.ethereumAddress(ethereumAddress)
       return {Ethereum: normalize ? normalizeEthereumAddress(ethereumAddress) : ethereumAddress}
     } else {
-      throw new Error(`Address ${address} is not a valid crossAccountId object (should contain "Substrate"/"substrate" or "Ethereum"/"ethereum" field)`)
+      throw new Error(`Address ${address} is not a valid crossAccountId object (should contain "Substrate"/"substrate" or "Ethereum"/"ethereum" field) or EthCrossAccountId (should contain "eth" and "sub" fields)`)
     }
   }
 
@@ -54,15 +70,15 @@ export const substrateOrMirrorIfEthereum = (address: string | object, normalize:
 }
 
 export const addressInAnyFormToEnhancedCrossAccountId = (address: string | object, ss58Prefix: number = 42): EnhancedCrossAccountId => {
-  const crossAccountId = Address.extract.crossAccountId(address)
+  const crossAccountId = guessAddressAndExtractCrossAccountIdUnsafe(address)
 
   if (crossAccountId.Ethereum) {
-    const normalized = Address.normalize.ethereumAddress(crossAccountId.Ethereum)
+    const normalized = normalizeEthereumAddress(crossAccountId.Ethereum)
     return {
       ...crossAccountId,
       address: normalized,
       addressSS58: normalized,
-      substratePublicKey: null,
+      substratePublicKey: normalized,
       isEthereum: true,
       isSubstrate: false,
       type: 'Ethereum',
@@ -70,9 +86,9 @@ export const addressInAnyFormToEnhancedCrossAccountId = (address: string | objec
   } else {
     return {
       ...crossAccountId,
-      address: Address.normalize.substrateAddress(crossAccountId.Substrate as string),
-      addressSS58: Address.normalize.substrateAddress(crossAccountId.Substrate as string, ss58Prefix),
-      substratePublicKey: Address.extract.substratePublicKey(crossAccountId.Substrate as string),
+      address: normalizeSubstrateAddress(crossAccountId.Substrate as string),
+      addressSS58: normalizeSubstrateAddress(crossAccountId.Substrate as string, ss58Prefix),
+      substratePublicKey: decodeSubstrateAddress(crossAccountId.Substrate as string).hex,
       isEthereum: false,
       isSubstrate: true,
       type: 'Substrate',

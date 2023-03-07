@@ -18,7 +18,7 @@ import {
   CrossAccountId, CrossAccountIdUncapitalized,
   EthAddressObj, EthAddressObjUncapitalized,
   SubAddressObj, SubAddressObjUncapitalized,
-  EnhancedCrossAccountId,
+  EnhancedCrossAccountId, EthCrossAccountId,
 } from '../types'
 import {
   addressInAnyFormToEnhancedCrossAccountId,
@@ -256,6 +256,28 @@ export const extract = {
       return null
     }
   },
+
+  ethCrossAccountId: (addressInAnyForm: string | object): EthCrossAccountId => {
+    const addressEnhanced = addressInAnyFormToEnhancedCrossAccountId(addressInAnyForm)
+    if (addressEnhanced.Substrate) {
+      return {
+        eth: '0x0000000000000000000000000000000000000000',
+        sub: addressEnhanced.substratePublicKey,
+      }
+    } else {
+      return {
+        eth: addressEnhanced.address,
+        sub: '0x00',
+      }
+    }
+  },
+  ethCrossAccountIdSafe: (addressInAnyForm: string | object): EthCrossAccountId | null => {
+    try {
+      return extract.ethCrossAccountId(addressInAnyForm)
+    } catch {
+      return null
+    }
+  }
 }
 
 export const mirror = {

@@ -21,6 +21,9 @@ describe('addresses', () => {
   const subMirrorOfEthAddress = '5Hao9DtZTNpCqUju8oGmtaCzau7zWMR3rBQkFfvE3suTu6aE'
   const subMirrorOfEthAddressPrefix255 = 'yGJFbkzDAL71x8i9Y8LgZFWaFwHpF8KVQubmAzDaKAVBp4BnU'
 
+  const zeroAddressEthereum = '0x0000000000000000000000000000000000000000'
+  const zeroAddressSubstrate = '0x00'
+
   test.concurrent('is', () => {
     expect(Address.is.substrateAddress(opal)).toBe(true)
     expect(Address.is.substrateAddress(ethAddress)).toBe(false)
@@ -448,8 +451,62 @@ describe('addresses', () => {
       addressSS58: '0xFbbdd160b7A5Dc08C1D803Fe5E03Ba213D910415',
       isEthereum: true,
       isSubstrate: false,
-      substratePublicKey: null,
+      substratePublicKey: '0xFbbdd160b7A5Dc08C1D803Fe5E03Ba213D910415',
       type: 'Ethereum'
     })
+  })
+
+  test.concurrent('extract - ethCrossAccountId', () => {
+    expect(Address.extract.ethCrossAccountId(quartz)).toEqual({
+      sub: substratePublicKey,
+      eth: zeroAddressEthereum,
+    })
+
+    expect(Address.extract.ethCrossAccountId(ethAddressLowercase)).toEqual({
+      sub: zeroAddressSubstrate,
+      eth: ethAddress,
+    })
+
+    expect(() => Address.extract.ethCrossAccountId(quartzMangled)).toThrow('is not a valid Substrate or Ethereum address')
+    expect(() => Address.extract.ethCrossAccountId(ethAddressMangled)).toThrow('is not a valid Substrate or Ethereum address')
+    expect(Address.extract.ethCrossAccountIdSafe(quartzMangled)).toEqual(null)
+    expect(Address.extract.ethCrossAccountIdSafe(ethAddressMangled)).toEqual(null)
+  })
+
+  test.concurrent('extract - from EthCrossAccountId', () => {
+    expect(Address.extract.address({
+      sub: substratePublicKey,
+      eth: zeroAddressEthereum,
+    })).toEqual(opal)
+
+    expect(Address.extract.address({
+      sub: zeroAddressSubstrate,
+      eth: ethAddressLowercase,
+    })).toEqual(ethAddress)
+
+    expect(() => Address.extract.address({
+      sub: substratePublicKeyMangled1,
+      eth: zeroAddressEthereum,
+    })).toThrow('Invalid substrate address')
+
+    expect(() => Address.extract.address({
+      sub: substratePublicKey,
+      eth: ethAddressLowercase,
+    })).toThrow('One of the addresses must be 0')
+
+    expect(() => Address.extract.address({
+      sub: zeroAddressSubstrate,
+      eth: zeroAddressEthereum,
+    })).toThrow('One of the addresses must be 0')
+
+    expect(() => Address.extract.address({
+      sub: ethAddressLowercase,
+      eth: zeroAddressSubstrate,
+    })).toThrow('Invalid substrate address')
+
+    expect(() => Address.extract.address({
+      sub: zeroAddressSubstrate,
+      eth: ethAddressMangled,
+    })).toThrow('is not valid ethereum address')
   })
 })
