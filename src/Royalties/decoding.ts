@@ -27,7 +27,7 @@ export const decodeRoyaltyPart = (encoded: string): UniqueRoyaltyPart => {
   }
 }
 
-export const decodeRoyalty = (encoded: string): UniqueRoyaltyPart[] => {
+export const decodeRoyalties = (encoded: string): UniqueRoyaltyPart[] => {
   const parts = splitStringEvery(encoded.substring(2), 128).map(
     (encoded) => '0x' + encoded,
   )

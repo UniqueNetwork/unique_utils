@@ -19,7 +19,7 @@ export const Royalties = {
     },
   },
   calculate: calculation.calculateRoyalties,
-  decode: decoding.decodeRoyalty,
+  decode: decoding.decodeRoyalties,
   encode: encoding.encodeRoyalties,
   validate: (royalties: UniqueRoyaltyPartToEncode[]): royalties is UniqueRoyaltyPart[] => {
     parseRoyalties(royalties)
