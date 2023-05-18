@@ -1,5 +1,3 @@
-import {s} from 'vitest/dist/global-d05ffb3f'
-
 export type SubAddressObj = { Substrate: string }
 export type SubAddressObjUncapitalized = { substrate: string }
 export type EthAddressObj = { Ethereum: string }

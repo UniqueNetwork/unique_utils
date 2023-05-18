@@ -1,8 +1,8 @@
 const config = {
   hooks: {
-    "before:init": ["npm run testrun"],
+    "before:init": ["yarn testrun"],
     // "after:my-plugin:bump": "./bin/my-script.sh",
-    "after:bump": "npm i && npm run build",
+    "after:bump": "yarn && yarn build",
     "after:git:release": "echo After git push, before github release",
     "after:release": "echo Successfully released ${name} v${version}."
   },

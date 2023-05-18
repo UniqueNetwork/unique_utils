@@ -21,6 +21,7 @@ export default defineConfig([
       extension: 'src/ExtensionTools/index.ts',
       chainLens: 'src/ChainLens/index.ts',
       exchangeInfo: 'src/ExchangeInfo/index.ts',
+      royalties: 'src/Royalties/index.ts',
     },
     format: [
       'esm',
