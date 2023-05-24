@@ -63,10 +63,6 @@ export const parseRoyaltyPart = (
     throw new Error(`Decimals must be an integer, got ${part.decimals}`)
   }
 
-  if (!Number.isInteger(part.value) && (typeof part.value !== 'bigint')) {
-    throw new Error(`Value must be an integer or bigint, got ${part.value} (${typeof part.value})`)
-  }
-
   if (part.value < 1 || part.value > (2n ** 64n - 1n)) {
     throw new Error(
       `Value must be between 1 and 18446744073709551615 (uint64), got ${part.value}`,
