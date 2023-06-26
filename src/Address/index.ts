@@ -208,6 +208,29 @@ export const extract = {
     return guessAddressAndExtractCrossAccountIdSafe(addressOrCrossAccountId, true)
   },
 
+  crossAccountIdUncapitalized: (addressOrCrossAccountId: string | object): CrossAccountIdUncapitalized => {
+    const crossAccountId = guessAddressAndExtractCrossAccountIdUnsafe(addressOrCrossAccountId)
+    return crossAccountId.Substrate ? {substrate: crossAccountId.Substrate} : {ethereum: crossAccountId.Ethereum!}
+  },
+  crossAccountIdUncapitalizedSafe: (addressOrCrossAccountId: string | object): CrossAccountIdUncapitalized | null => {
+    try {
+      return extract.crossAccountIdUncapitalized(addressOrCrossAccountId)
+    } catch {
+      return null
+    }
+  },
+  crossAccountIdUncapitalizedNormalized: (addressOrCrossAccountId: string | object): CrossAccountIdUncapitalized => {
+    const crossAccountId = guessAddressAndExtractCrossAccountIdUnsafe(addressOrCrossAccountId, true)
+    return crossAccountId.Substrate ? {substrate: crossAccountId.Substrate} : {ethereum: crossAccountId.Ethereum!}
+  },
+  crossAccountIdUncapitalizedNormalizedSafe: (addressOrCrossAccountId: string | object): CrossAccountIdUncapitalized | null => {
+    try {
+      return extract.crossAccountIdUncapitalizedNormalized(addressOrCrossAccountId)
+    } catch {
+      return null
+    }
+  },
+
 
   substrateOrMirrorIfEthereum: (addressOrCrossAccountId: string | object): string => {
     return substrateOrMirrorIfEthereum(addressOrCrossAccountId)

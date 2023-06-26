@@ -643,6 +643,17 @@ Address.extract.crossAccountId({ethereum: '0x17c4E6453Cc49aaaaeaca894E6a9683e000
 
 Address.extract.crossAccountIdNormalized('0x17c4E6453Cc49aaaaeaca894E6a9683e00000005')
 // {Ethereum: '0x17c4E6453Cc49aaaaeaca894E6a9683e00000005'}
+
+Address.extract.crossAccountIdUncapitalized('yGJMj5z32dpBUigGVFgatC382Ti3FNVSKyfgi87UF7f786MJL')
+Address.extract.crossAccountIdUncapitalizedSafe('yGJMj5z32dpBUigGVFgatC382Ti3FNVSKyfgi87UF7f786MJL')
+Address.extract.crossAccountIdUncapitalizedNormalized('yGJMj5z32dpBUigGVFgatC382Ti3FNVSKyfgi87UF7f786MJL')
+Address.extract.crossAccountIdUncapitalizedNormalizedSafe('yGJMj5z32dpBUigGVFgatC382Ti3FNVSKyfgi87UF7f786MJL')
+// {substrate: 'yGJMj5z32dpBUigGVFgatC382Ti3FNVSKyfgi87UF7f786MJL'}
+
+Address.extract.crossAccountIdUncapitalizedNormalized('0x17c4e6453cc49aaaaeaca894e6a9683e00000005')
+Address.extract.crossAccountIdUncapitalizedNormalized({ethereum: '0x17c4e6453cc49aaaaeaca894e6a9683e00000005'})
+// {ethereum: '0x17c4E6453Cc49aaaaeaca894E6a9683e00000005'}
+
 ```
 
 Safe methods don't throw error on invalid input:
