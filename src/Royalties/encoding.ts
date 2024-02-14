@@ -1,4 +1,4 @@
-import {RoyaltyType, UniqueRoyaltyPartToEncode} from './types'
+import {IV2Royalty, RoyaltyType, UniqueRoyaltyPart, UniqueRoyaltyPartToEncode} from './types'
 import {encodeAddress, get42Zeros, parseRoyaltyPart} from './utils'
 
 /**
@@ -37,3 +37,19 @@ export const encodeRoyalties = (
   parts: UniqueRoyaltyPartToEncode[],
 ): string =>
   '0x' + parts.map((part) => encodeRoyaltyPart(part).substring(2)).join('')
+
+
+export const encodeRoyaltyFromV2 = (royalties: IV2Royalty[]) => {
+  const royaltiesToEncode = royalties.map((royalty) => {
+    const {address, percent, isPrimaryOnly} = royalty;
+    return {
+      address,
+      value: BigInt(Math.round(percent * 100)),
+      decimals: 4,
+      royaltyType: isPrimaryOnly ? RoyaltyType.PRIMARY_ONLY : RoyaltyType.DEFAULT,
+      version: 1,
+    } satisfies UniqueRoyaltyPart
+  })
+
+  return encodeRoyalties(royaltiesToEncode)
+}

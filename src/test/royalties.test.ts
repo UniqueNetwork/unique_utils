@@ -1,11 +1,11 @@
 import {
-  Royalties
+  Royalties, RoyaltyType
 } from '../Royalties'
 import {
   ETH_DEFAULT,
   SUB_PRIMARY_ONLY,
   ROYALTY_ENCODED,
-  ROYALTY_DECODED,
+  ROYALTY_DECODED, UNIQUE_V2,
 } from './royalties.samples'
 import {describe, test, expect} from 'vitest'
 
@@ -142,6 +142,18 @@ describe('TS implementation', () => {
           },
         ])
       }).to.throw()
+    })
+  })
+
+  describe('Unique Schema v2', () => {
+    test('should encode royalties', () => {
+      const royalties = Royalties.uniqueV2.encode(UNIQUE_V2.decoded)
+      expect(royalties).to.equal(UNIQUE_V2.encoded)
+    })
+
+    test('should decode royalties', () => {
+      const royalties = Royalties.uniqueV2.decode(UNIQUE_V2.encoded)
+      expect(royalties).to.deep.equal(UNIQUE_V2.decoded)
     })
   })
 })

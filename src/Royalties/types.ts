@@ -28,3 +28,9 @@ export type LibPart = {
   account: string
   value: bigint
 }
+
+export type IV2Royalty = {
+  address: string,
+  percent: number,
+  isPrimaryOnly?: boolean,
+}

@@ -7,6 +7,7 @@ import * as decoding from './decoding'
 import * as encoding from './encoding'
 import * as utils from './utils'
 import {parseRoyalties, parseRoyaltyPart} from './utils'
+import {encodeRoyaltyFromV2} from './encoding'
 
 export const Royalties = {
   part: {
@@ -24,6 +25,10 @@ export const Royalties = {
   validate: (royalties: UniqueRoyaltyPartToEncode[]): royalties is UniqueRoyaltyPart[] => {
     parseRoyalties(royalties)
     return true
+  },
+  uniqueV2: {
+    decode: decoding.decodeRoyaltyToV2,
+    encode: encoding.encodeRoyaltyFromV2,
   },
   utils,
 }

@@ -1,6 +1,6 @@
 import {Address} from '../Address'
 
-import {RoyaltyType, UniqueRoyaltyPart} from './types'
+import {IV2Royalty, RoyaltyType, UniqueRoyaltyPart} from './types'
 import {splitStringEvery} from './utils'
 
 export const decodeRoyaltyPart = (encoded: string): UniqueRoyaltyPart => {
@@ -33,4 +33,21 @@ export const decodeRoyalties = (encoded: string): UniqueRoyaltyPart[] => {
   )
 
   return parts.map((part) => decodeRoyaltyPart(part))
+}
+
+export const decodeRoyaltyToV2 = (encoded: string): IV2Royalty[] => {
+  const royaltyParts = encoded ? decodeRoyalties(encoded) : []
+
+  return royaltyParts.map((royaltyPart) => {
+    const royalty: IV2Royalty = {
+      address: royaltyPart.address,
+      // core idea: given value   2500 with decimals 4, we want to get 2.5
+      //                     or 650000 with decimals 6, we want to get 6.5
+      percent: Number(royaltyPart.value) / (Math.pow(10, royaltyPart.decimals - 2)),
+    }
+    if (royaltyPart.royaltyType === RoyaltyType.PRIMARY_ONLY) {
+      royalty.isPrimaryOnly = true
+    }
+    return royalty
+  })
 }
