@@ -22,6 +22,7 @@ export default defineConfig([
       chainLens: 'src/ChainLens/index.ts',
       exchangeInfo: 'src/ExchangeInfo/index.ts',
       royalties: 'src/Royalties/index.ts',
+      hashes: 'src/Hashes/index.ts',
     },
     format: [
       'esm',

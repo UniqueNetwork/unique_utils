@@ -1,5 +1,6 @@
 import {Utf8, Utf16, HexString} from 'utf-helpers'
 export {Utf8, Utf16, HexString}
+export const HexUtils = HexString
 
 export const DWORDHexString = {
   _checkU32: (num: number): number => {
