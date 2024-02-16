@@ -23,6 +23,7 @@ export default defineConfig([
       exchangeInfo: 'src/ExchangeInfo/index.ts',
       royalties: 'src/Royalties/index.ts',
       hashes: 'src/Hashes/index.ts',
+      sr25519: 'src/Utils/sr25519.ts',
     },
     format: [
       'esm',
@@ -62,4 +63,11 @@ export default defineConfig([
     globalName: 'UniqueHashes',
     ...iifeOptions,
   },
+  {
+    entry: {
+      sr25519: 'src/Utils/sr25519.ts',
+    },
+    globalName: 'Sr25519',
+    ...iifeOptions,
+  }
 ])
