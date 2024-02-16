@@ -1,15 +1,9 @@
-import {
-  Royalties, RoyaltyType
-} from '../Royalties'
-import {
-  ETH_DEFAULT,
-  SUB_PRIMARY_ONLY,
-  ROYALTY_ENCODED,
-  ROYALTY_DECODED, UNIQUE_V2,
-} from './royalties.samples'
-import {describe, test, expect} from 'vitest'
+import {Royalties} from '../Royalties'
+import {ETH_DEFAULT, ROYALTY_DECODED, ROYALTY_ENCODED, SUB_PRIMARY_ONLY} from './royalties.samples'
+import {describe, expect, test} from 'vitest'
+import {ChainLenses} from '../ChainLens'
 
-describe('TS implementation', () => {
+describe('Royalties TS implementation', async () => {
   describe('UniqueRoyaltyPart', () => {
     test('encode - sub - primary', () => {
       const encoded = Royalties.part.encode(SUB_PRIMARY_ONLY.decoded)
@@ -145,15 +139,60 @@ describe('TS implementation', () => {
     })
   })
 
-  describe('Unique Schema v2', () => {
-    test('should encode royalties', () => {
-      const royalties = Royalties.uniqueV2.encode(UNIQUE_V2.decoded)
-      expect(royalties).to.equal(UNIQUE_V2.encoded)
+  describe('Royalties: Unique Schema v2', async () => {
+    test('On real data from chain', async () => {
+      // const collection = await ChainLenses.unique.requestCollection(4)
+      // const encoded = collection?.propertiesMap.royalties.valueHex
+      // expect(encoded).toBeDefined()
+      // console.log(encoded)
+      const encoded = '0x01000000000000000000000000000000000000000000010400000000000000643e2105d0098e24c2dd19fffba04cd882707764e3e0a5f5e55255713268cc8874'
+      const decodedV2 = Royalties.uniqueV2.decode(encoded)
+      expect(decodedV2).toEqual([
+        {
+          address: '5DUAdq6nLoyttjdCQsnTd3WYSjYxZ17LiHJY5NrXL51ZxqbY',
+          percent: 1
+        }
+      ])
     })
 
-    test('should decode royalties', () => {
-      const royalties = Royalties.uniqueV2.decode(UNIQUE_V2.encoded)
-      expect(royalties).to.deep.equal(UNIQUE_V2.decoded)
+    test.concurrent('Royalties: Unique Schema v2 - unit test', () => {
+      const raw = [
+        {
+          version: 1,
+          decimals: 4,
+          value: 100n,
+          royaltyType: 'DEFAULT' as const,
+          address: '5DUAdq6nLoyttjdCQsnTd3WYSjYxZ17LiHJY5NrXL51ZxqbY'
+        },
+        {
+          version: 1,
+          decimals: 4,
+          value: 9999n,
+          royaltyType: 'PRIMARY_ONLY' as const,
+          address: '0x1234a38988dd5ecc93dd9ce90a44a00e5fb91e4c'
+        }
+      ]
+
+      const encoded = Royalties.encode(raw)
+      const decodedInV2 = Royalties.uniqueV2.decode(encoded)
+
+      expect(decodedInV2).to.deep.equal([
+        {
+          address: '5DUAdq6nLoyttjdCQsnTd3WYSjYxZ17LiHJY5NrXL51ZxqbY',
+          percent: 1
+        },
+        {
+          address: '0x1234a38988dd5ecc93dd9ce90a44a00e5fb91e4c',
+          percent: 99.99,
+          isPrimaryOnly: true
+        }
+      ])
+
+      const encoded2 = Royalties.uniqueV2.encode(decodedInV2)
+      expect(encoded).to.equal(encoded2)
+
+      const decodedInOldAgain = Royalties.decode(encoded2)
+      expect(raw).to.deep.equal(decodedInOldAgain)
     })
   })
 })

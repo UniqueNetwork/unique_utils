@@ -16,7 +16,7 @@
 // https://github.com/polkadot-js/common/blob/master/packages/util-crypto/src/xxhash/asU8a.ts
 
 
-import {HexString, Utf8} from 'src/StringUtils'
+import {HexString, Utf8} from 'utf-helpers'
 
 export function u8aConcat (u8as: readonly Uint8Array[], length = 0): Uint8Array {
   const count = u8as.length;

@@ -1,4 +1,6 @@
-import {Address, StringUtils, CrossAccountIdUncapitalized, EnhancedCrossAccountId} from '../index'
+import {Address, CrossAccountIdUncapitalized, EnhancedCrossAccountId} from '../index'
+
+import {Utf8, Utf16, HexString} from 'utf-helpers'
 
 type MakeFieldsNullable<Ob> = { [K in keyof Ob]: Ob[K] | null }
 
@@ -43,8 +45,8 @@ export type TokenPropertyPermission = {
 const decodeTPPArray = (arr: Array<{ key: number[], permission: any }>): TokenPropertyPermission[] => {
   return arr.map(({key, permission}) => {
     return {
-      key: StringUtils.Utf8.numberArrayToString(key),
-      keyHex: StringUtils.HexString.fromArray(key),
+      key: Utf8.numberArrayToString(key),
+      keyHex: HexString.fromArray(key),
       permission: permission as TokenPropertyPermissionValue,
     }
   })
@@ -71,10 +73,10 @@ const decodeCollectionProperties = (arr: Array<{ key: number[], value: number[] 
   for (const elem of arr) {
     const {key, value} = elem
     const decoded: DecodedProperty = {
-      key: StringUtils.Utf8.numberArrayToString(key),
-      keyHex: StringUtils.HexString.fromArray(key),
-      value: StringUtils.Utf8.numberArrayToString(value),
-      valueHex: StringUtils.HexString.fromArray(value),
+      key: Utf8.numberArrayToString(key),
+      keyHex: HexString.fromArray(key),
+      value: Utf8.numberArrayToString(value),
+      valueHex: HexString.fromArray(value),
     }
     properties.push(decoded)
     propertiesMap[decoded.key] = decoded
@@ -248,9 +250,9 @@ export const requestCollection = async (rpcUrl: string, collectionId: number, ss
     owner: Address.extract.enhancedCrossAccountId(rawCollection.owner, ss58Prefix),
     adminList,
     mode: rawCollection.mode,
-    name: StringUtils.Utf16.numberArrayToString(rawCollection.name),
-    description: StringUtils.Utf16.numberArrayToString(rawCollection.description),
-    tokenPrefix: StringUtils.Utf8.numberArrayToString(rawCollection.token_prefix),
+    name: Utf16.numberArrayToString(rawCollection.name),
+    description: Utf16.numberArrayToString(rawCollection.description),
+    tokenPrefix: Utf8.numberArrayToString(rawCollection.token_prefix),
     sponsorship: rawCollection.sponsorship,
     decodedSponsorship,
     lastTokenId,

@@ -1,7 +1,7 @@
 import {describe, expect, test} from 'vitest'
 import {Address} from '../Address'
 
-describe('addresses', () => {
+describe.concurrent('addresses', () => {
   const opal = '5D7WxWqqUYNm962RUNdf1UTCcuasXCigHFMGG4hWX6hkp7zU'
   const quartz = 'yGDnKaHASMGaWSKS4Tv3SNQpTyJH89Ao3LfhgzcMbdhz6y2VT'
   const unique = 'unfZsSFU21ZtJwkEztT1Tc7c6T9R9GxseJgeUDwFQLSs8UDLb'
@@ -534,5 +534,60 @@ describe('addresses', () => {
       sub: zeroAddressSubstrate,
       eth: ethAddressMangled,
     })).toThrow('is not valid ethereum address')
+  })
+})
+
+const DWORDHexString = Address.utils.DWORDHexString
+describe.concurrent('DWORDHexString', () => {
+  test.concurrent('fromNumber', () => {
+    expect(DWORDHexString.fromNumber(0)).toBe('00000000')
+    expect(DWORDHexString.fromNumber(15)).toBe('0000000f')
+    expect(DWORDHexString.fromNumber(2 ** 32 - 1)).toBe('ffffffff')
+
+    expect(() => {
+      DWORDHexString.fromNumber(-1)
+    }).toThrowError('Passed number is less than 0: ')
+    expect(() => {
+      DWORDHexString.fromNumber(2 ** 32)
+    }).toThrowError('Passed number is more than 2**32: ')
+  })
+
+  test.concurrent('toNumber', () => {
+    expect(DWORDHexString.toNumber('00000000')).toBe(0)
+    expect(DWORDHexString.toNumber('0000000f')).toBe(15)
+    expect(DWORDHexString.toNumber('ffffffff')).toBe(2 ** 32 - 1)
+
+    expect(() => {
+      DWORDHexString.toNumber('')
+    }).toThrowError('Passed string is not hexadecimal: ')
+    expect(() => {
+      DWORDHexString.toNumber('fffffffff')
+    }).toThrowError('Passed number is more than 2**32: ')
+  })
+
+
+  test.concurrent('_checkU32', () => {
+    expect(DWORDHexString._checkU32(0)).toBe(0)
+    expect(DWORDHexString._checkU32(15)).toBe(15)
+    expect(DWORDHexString._checkU32(2 ** 32 - 1)).toBe(2 ** 32 - 1)
+
+    expect(() => {
+      DWORDHexString._checkU32('' as any as number)
+    }).toThrowError('Passed number is not a number: ')
+    expect(() => {
+      DWORDHexString._checkU32(-1)
+    }).toThrowError('Passed number is less than 0: ')
+    expect(() => {
+      DWORDHexString._checkU32(2 ** 32)
+    }).toThrowError('Passed number is more than 2**32: ')
+    expect(() => {
+      DWORDHexString._checkU32({} as any as number)
+    }).toThrowError('Passed number is not a number: ')
+    expect(() => {
+      DWORDHexString._checkU32([] as any as number)
+    }).toThrowError('Passed number is not a number: ')
+    expect(() => {
+      (DWORDHexString._checkU32 as any)()
+    }).toThrowError('Passed number is not a number: ')
   })
 })

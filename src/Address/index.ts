@@ -9,7 +9,7 @@ import {
 
 import {
   collectionIdAndTokenIdToNestingAddress,
-  collectionIdToEthAddress, compareEthereumAddresses,
+  collectionIdToEthAddress, compareEthereumAddresses, DWORDHexString,
   ethAddressToCollectionId,
   nestingAddressToCollectionIdAndTokenId,
   normalizeEthereumAddress
@@ -336,4 +336,7 @@ export const Address = {
   normalize,
   compare,
   substrate,
+  utils: {
+    DWORDHexString,
+  }
 }

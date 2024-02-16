@@ -16,7 +16,7 @@ export default defineConfig([
   {
     entry: {
       index: 'src/index.ts',
-      string: 'src/StringUtils/index.ts',
+      string: 'src/Utils/string.ts',
       address: 'src/Address/index.ts',
       extension: 'src/ExtensionTools/index.ts',
       chainLens: 'src/ChainLens/index.ts',
@@ -53,6 +53,13 @@ export default defineConfig([
       chainLens: 'src/ChainLens/index.ts',
     },
     globalName: 'ChainLens',
+    ...iifeOptions,
+  },
+  {
+    entry: {
+      hashes: 'src/Hashes/index.ts',
+    },
+    globalName: 'UniqueHashes',
     ...iifeOptions,
   },
 ])

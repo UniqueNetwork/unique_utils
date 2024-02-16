@@ -42,9 +42,14 @@ export const encodeRoyalties = (
 export const encodeRoyaltyFromV2 = (royalties: IV2Royalty[]) => {
   const royaltiesToEncode = royalties.map((royalty) => {
     const {address, percent, isPrimaryOnly} = royalty;
+    const valueInPercent = percent * 100
+
+    // if valueInPercent is not integer
+    if (valueInPercent % 1 !== 0) throw new Error('Royalty percent value must has maximum 2 decimal places')
+
     return {
       address,
-      value: BigInt(Math.round(percent * 100)),
+      value: BigInt(percent * 100),
       decimals: 4,
       royaltyType: isPrimaryOnly ? RoyaltyType.PRIMARY_ONLY : RoyaltyType.DEFAULT,
       version: 1,

@@ -1,7 +1,7 @@
 import {base58, blake2b} from './imports'
 import {DecodeSubstrateAddressResult, validate, is} from './index'
 import {normalizeEthereumAddress} from './ethereum'
-import {HexString} from '../StringUtils'
+import {HexString} from 'utf-helpers'
 
 const blake2AsU8a = (u8a: Uint8Array, dkLen: 8 | 16 | 32 | 48 | 64 = 32): Uint8Array => {
   return blake2b(u8a, {dkLen})
