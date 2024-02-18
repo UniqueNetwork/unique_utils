@@ -284,4 +284,3 @@ export interface IPolkadotExtensionAccount extends Omit<Signer, 'signRaw'> {
   type: KeypairType // 'ed25519' | 'sr25519' | 'ecdsa' | 'ethereum'
 }
 ```
-g

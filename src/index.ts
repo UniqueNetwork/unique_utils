@@ -19,6 +19,6 @@ export const {
 export const HexUtils = StringUtils.HexString
 
 export {Coin} from './Utils/coin'
-export type {ICoin} from './Utils/coin'
+export type {ICoin, ICoinFormats} from './Utils/coin'
 
 export * from './types'

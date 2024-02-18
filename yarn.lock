@@ -1295,6 +1295,11 @@ clone@^1.0.2:
   resolved "https://registry.yarnpkg.com/clone/-/clone-1.0.4.tgz#da309cc263df15994c688ca902179ca3c7cd7c7e"
   integrity sha512-JQHZ2QMW6l3aH/j6xCqQThY/9OH4D/9ls34cgkUBiEeocRTU04tHfKPBsUK1PqZCUQM7GiA0IIXJSuXHI64Kbg==
 
+coin-format@^0.0.2:
+  version "0.0.2"
+  resolved "https://registry.yarnpkg.com/coin-format/-/coin-format-0.0.2.tgz#2c085cd0ee21b837bfb532a18d2d3d5ff28413e1"
+  integrity sha512-QhsGG2x2vj6t/HSTNWv9/95abQtM2KvyUdsqPwvCqlD3gdAXdBg6qmlsHTHzsywMP5EWUneVGJm6vv/vkuPCMg==
+
 color-convert@^1.9.0:
   version "1.9.3"
   resolved "https://registry.yarnpkg.com/color-convert/-/color-convert-1.9.3.tgz#bb71850690e1f136567de629d2d5471deda4c1e8"
