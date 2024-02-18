@@ -4,6 +4,9 @@ import {IV2Royalty, RoyaltyType, UniqueRoyaltyPart} from './types'
 import {splitStringEvery} from './utils'
 
 export const decodeRoyaltyPart = (encoded: string): UniqueRoyaltyPart => {
+  if (encoded.length !== 66) {
+    throw new Error('Invalid royalty part encoding - length is not 32 bytes ("0x" + 64 symbols)')
+  }
   const encodedMeta = encoded.slice(2, 66)
   const encodedAddress = encoded.slice(2 + 64)
 
@@ -28,6 +31,10 @@ export const decodeRoyaltyPart = (encoded: string): UniqueRoyaltyPart => {
 }
 
 export const decodeRoyalties = (encoded: string): UniqueRoyaltyPart[] => {
+  if (((encoded.length - 2) % 128) !== 0) {
+    throw new Error('Invalid royalties encoding - length is not multiple of 64 bytes (128 symbols)')
+  }
+
   const parts = splitStringEvery(encoded.substring(2), 128).map(
     (encoded) => '0x' + encoded,
   )
