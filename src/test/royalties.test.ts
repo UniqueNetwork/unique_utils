@@ -169,7 +169,7 @@ describe('Royalties TS implementation', async () => {
           decimals: 4,
           value: 9999n,
           royaltyType: 'PRIMARY_ONLY' as const,
-          address: '0x1234a38988dd5ecc93dd9ce90a44a00e5fb91e4c'
+          address: '0x1234A38988Dd5ecC93Dd9cE90a44A00e5FB91e4C'
         }
       ]
 
@@ -182,7 +182,7 @@ describe('Royalties TS implementation', async () => {
           percent: 1
         },
         {
-          address: '0x1234a38988dd5ecc93dd9ce90a44a00e5fb91e4c',
+          address: '0x1234A38988Dd5ecC93Dd9cE90a44A00e5FB91e4C',
           percent: 99.99,
           isPrimaryOnly: true
         }

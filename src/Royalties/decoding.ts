@@ -4,7 +4,7 @@ import {IV2Royalty, RoyaltyType, UniqueRoyaltyPart} from './types'
 import {splitStringEvery} from './utils'
 
 export const decodeRoyaltyPart = (encoded: string): UniqueRoyaltyPart => {
-  if (encoded.length !== 66) {
+  if (encoded.length !== 130) {
     throw new Error('Invalid royalty part encoding - length is not 32 bytes ("0x" + 64 symbols)')
   }
   const encodedMeta = encoded.slice(2, 66)
@@ -13,12 +13,13 @@ export const decodeRoyaltyPart = (encoded: string): UniqueRoyaltyPart => {
   const version = parseInt(encodedMeta.slice(0, 2), 16)
   const decimals = parseInt(encodedMeta.slice(46, 46 + 2), 16)
   const value = BigInt('0x' + encodedMeta.slice(48))
-  const royaltyType =
-    encodedMeta[44] === '0' ? RoyaltyType.DEFAULT : RoyaltyType.PRIMARY_ONLY
+  const royaltyType = encodedMeta[44] === '0'
+    ? RoyaltyType.DEFAULT
+    : RoyaltyType.PRIMARY_ONLY
 
   const isEthereum = encodedMeta[45] === '0'
   const address = isEthereum
-    ? '0x' + encodedAddress.slice(24)
+    ? Address.normalize.ethereumAddress('0x' + encodedAddress.slice(24))
     : Address.substrate.encode(encodedAddress)
 
   return {

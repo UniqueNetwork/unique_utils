@@ -25,12 +25,12 @@ export const ETH_DEFAULT = {
     decimals: 6,
     value: 15n,
     royaltyType: RoyaltyType.DEFAULT,
-    address: '0x1234a38988dd5ecc93dd9ce90a44a00e5fb91e4c',
+    address: '0xcafe52dae8874E9E6d7511e05d213590E47e97B6',
   },
   encoded:
     '0x' +
     '010000000000000000000000000000000000000000000006000000000000000f' +
-    '0000000000000000000000001234a38988dd5ecc93dd9ce90a44a00e5fb91e4c',
+    '000000000000000000000000cafe52dae8874e9e6d7511e05d213590e47e97b6',
 } satisfies Sample
 
 export const ROYALTY_ENCODED =
