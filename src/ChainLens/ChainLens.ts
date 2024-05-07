@@ -20,7 +20,9 @@ const UNIQUE_RPCs: { [K in UNIQUE_CHAINS]: string } = {
   rc: 'https://rpc-rc.unique.network/',
 }
 
-const requestRPC = async <T = any>(rpcUrl: string, method: string, params: unknown[]): Promise<T> => {
+type RequestRPC = <T = any>(method: string, params: unknown[]) => Promise<T>
+
+const buildJsonRpc = (rpcUrl: string): RequestRPC => async (method, params) => {
   const fetch = globalThis.fetch
   const response = await fetch(rpcUrl, {
     method: 'POST',
@@ -28,7 +30,7 @@ const requestRPC = async <T = any>(rpcUrl: string, method: string, params: unkno
     body: JSON.stringify({jsonrpc: "2.0", id: 1, method, params}),
   })
   const result = await response.json()
-  return result.result as T
+  return result.result
 }
 
 export type TokenPropertyPermissionValue = {
@@ -199,8 +201,8 @@ export interface IRftToken {
 }
 
 
-export const requestCollection = async (rpcUrl: string, collectionId: number, ss58Prefix: number): Promise<ICollection | null> => {
-  const rawCollection = await requestRPC(rpcUrl, "unique_collectionById", [collectionId])
+export const requestCollection = async (requestRPC: RequestRPC, collectionId: number, ss58Prefix: number): Promise<ICollection | null> => {
+  const rawCollection = await requestRPC("unique_collectionById", [collectionId])
   if (!rawCollection) return null
 
   const {properties, propertiesMap} = decodeCollectionProperties(rawCollection.properties)
@@ -210,9 +212,9 @@ export const requestCollection = async (rpcUrl: string, collectionId: number, ss
     effectiveLimits,
     lastTokenId,
   ] = await Promise.all([
-    requestRPC(rpcUrl, "unique_adminlist", [collectionId]) as Promise<CrossAccountIdUncapitalized[]>,
-    requestRPC(rpcUrl, 'unique_effectiveCollectionLimits', [collectionId]) as Promise<CollectionEffectiveLimits>,
-    requestRPC(rpcUrl, 'unique_lastTokenId', [collectionId]) as Promise<number>,
+    requestRPC('unique_adminlist', [collectionId]) as Promise<CrossAccountIdUncapitalized[]>,
+    requestRPC('unique_effectiveCollectionLimits', [collectionId]) as Promise<CollectionEffectiveLimits>,
+    requestRPC('unique_lastTokenId', [collectionId]) as Promise<number>,
   ])
 
   const adminList = adminListResult.map(crossAccountId => Address.extract.enhancedCrossAccountId(crossAccountId, ss58Prefix))
@@ -272,10 +274,10 @@ export const requestCollection = async (rpcUrl: string, collectionId: number, ss
   return collection
 }
 
-export const requestNftToken = async (rpcUrl: string, collectionId: number, tokenId: number, ss58Prefix: number): Promise<INftToken | null> => {
+export const requestNftToken = async (requestRPC: RequestRPC, collectionId: number, tokenId: number, ss58Prefix: number): Promise<INftToken | null> => {
   const [rawCollection, rawToken] = await Promise.all([
-    requestRPC(rpcUrl, "unique_collectionById", [collectionId]),
-    requestRPC(rpcUrl, "unique_tokenData", [collectionId, tokenId]),
+    requestRPC("unique_collectionById", [collectionId]),
+    requestRPC("unique_tokenData", [collectionId, tokenId]),
   ])
 
   if (!rawCollection || rawCollection.mode !== 'NFT' || !rawToken || !rawToken.owner) {
@@ -302,10 +304,10 @@ export const requestNftToken = async (rpcUrl: string, collectionId: number, toke
 }
 
 
-export const requestRftToken = async (rpcUrl: string, collectionId: number, tokenId: number, ss58Prefix: number): Promise<IRftToken | null> => {
+export const requestRftToken = async (requestRPC: RequestRPC, collectionId: number, tokenId: number, ss58Prefix: number): Promise<IRftToken | null> => {
   const [rawCollection, rawToken] = await Promise.all([
-    requestRPC(rpcUrl, "unique_collectionById", [collectionId]),
-    requestRPC(rpcUrl, "unique_tokenData", [collectionId, tokenId]),
+    requestRPC("unique_collectionById", [collectionId]),
+    requestRPC("unique_tokenData", [collectionId, tokenId]),
   ])
 
   if (!rawCollection || rawCollection.mode !== 'ReFungible' || !rawToken || typeof rawToken.pieces !== 'number') { // protects from NFT/FT collections and from chains below 929030
@@ -318,7 +320,7 @@ export const requestRftToken = async (rpcUrl: string, collectionId: number, toke
   if (rawToken.owner) {
     owners = [Address.extract.enhancedCrossAccountId(rawToken.owner, ss58Prefix)]
   } else {
-    owners = (await requestRPC<CrossAccountIdUncapitalized[]>(rpcUrl, 'unique_tokenOwners', [collectionId, tokenId]))
+    owners = (await requestRPC<CrossAccountIdUncapitalized[]>('unique_tokenOwners', [collectionId, tokenId]))
       .map(crossAccountId => Address.extract.enhancedCrossAccountId(crossAccountId, ss58Prefix))
     allOwnersAreKnown = owners.length < 10
   }
@@ -356,50 +358,42 @@ export interface ChainLensOptions {
   ss58Prefix: number
 }
 
-export const generateChainLens = (rpcBaseUrl: string, options: ChainLensOptions = {ss58Prefix: 42}) => {
-  let rpcUrl = rpcBaseUrl
+export const generateChainLens = (rpcBaseUrlOrRequestRPC: string | RequestRPC, options: ChainLensOptions = {ss58Prefix: 42}) => {
+  const requestRPC = typeof rpcBaseUrlOrRequestRPC === 'string' ? buildJsonRpc(rpcBaseUrlOrRequestRPC) : rpcBaseUrlOrRequestRPC
 
   const ss58Prefix = options.ss58Prefix
 
   return {
-    get rpcUrl() {
-      return rpcUrl
-    },
-    set rpcUrl(newRpcUrl: string) {
-      rpcUrl = newRpcUrl
-    },
     get ss58Prefix() {
       return ss58Prefix
     },
-
     requestRPC: async <T = any>(method: string, params: unknown[]): Promise<T> => {
-      return requestRPC(rpcUrl, method, params)
+      return requestRPC(method, params)
     },
     requestCollection: async (collectionIdOrAddress: number | string) => {
       const collectionId = collectionIdOrAddressToCollectionId(collectionIdOrAddress)
 
-      return requestCollection(rpcUrl, collectionId, ss58Prefix)
+      return requestCollection(requestRPC, collectionId, ss58Prefix)
     },
     requestNftToken: async (collectionIdOrAddress: number | string, tokenId: number) => {
       const collectionId = collectionIdOrAddressToCollectionId(collectionIdOrAddress)
 
-      return requestNftToken(rpcUrl, collectionId, tokenId, ss58Prefix)
+      return requestNftToken(requestRPC, collectionId, tokenId, ss58Prefix)
     },
     requestNftTokenByAddress: async (tokenAddress: string) => {
       const {collectionId, tokenId} = Address.nesting.addressToIds(tokenAddress)
 
-      return requestNftToken(rpcUrl, collectionId, tokenId, ss58Prefix)
+      return requestNftToken(requestRPC, collectionId, tokenId, ss58Prefix)
     },
-
     requestRftToken: async (collectionIdOrAddress: number | string, tokenId: number) => {
       const collectionId = collectionIdOrAddressToCollectionId(collectionIdOrAddress)
 
-      return requestRftToken(rpcUrl, collectionId, tokenId, ss58Prefix)
+      return requestRftToken(requestRPC, collectionId, tokenId, ss58Prefix)
     },
     requestRftTokenByAddress: async (tokenAddress: string) => {
       const {collectionId, tokenId} = Address.nesting.addressToIds(tokenAddress)
 
-      return requestRftToken(rpcUrl, collectionId, tokenId, ss58Prefix)
+      return requestRftToken(requestRPC, collectionId, tokenId, ss58Prefix)
     },
   }
 }
