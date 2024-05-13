@@ -22,7 +22,7 @@ const UNIQUE_RPCs: { [K in UNIQUE_CHAINS]: string } = {
 
 type RequestRPC = <T = any>(method: string, params: unknown[]) => Promise<T>
 
-const buildJsonRpc = (rpcUrl: string): RequestRPC => async (method, params) => {
+const requestRPCFactory = (rpcUrl: string): RequestRPC => async (method, params) => {
   const fetch = globalThis.fetch
   const response = await fetch(rpcUrl, {
     method: 'POST',
@@ -359,7 +359,7 @@ export interface ChainLensOptions {
 }
 
 export const generateChainLens = (rpcBaseUrlOrRequestRPC: string | RequestRPC, options: ChainLensOptions = {ss58Prefix: 42}) => {
-  const requestRPC = typeof rpcBaseUrlOrRequestRPC === 'string' ? buildJsonRpc(rpcBaseUrlOrRequestRPC) : rpcBaseUrlOrRequestRPC
+  const requestRPC = typeof rpcBaseUrlOrRequestRPC === 'string' ? requestRPCFactory(rpcBaseUrlOrRequestRPC) : rpcBaseUrlOrRequestRPC
 
   const ss58Prefix = options.ss58Prefix
 
