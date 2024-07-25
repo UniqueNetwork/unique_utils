@@ -56,5 +56,52 @@
     "coin-format": "^0.0.2",
     "utf-helpers": "^0.0.3"
   },
-  "packageManager": "yarn@1.22.21+sha1.1959a18351b811cdeedbd484a8f86c3cc3bbaf72"
+  "packageManager": "yarn@1.22.21+sha1.1959a18351b811cdeedbd484a8f86c3cc3bbaf72",
+  "exports": {
+    ".": {
+      "import": "./index.mjs",
+      "require": "./index.js",
+      "types": "./index.d.ts"
+    },
+    "./string": {
+      "import": "./string.js",
+      "require": "./string.js",
+      "types": "./string.d.ts"
+    },
+    "./address": {
+      "import": "./address.js",
+      "require": "./address.js",
+      "types": "./address.d.ts"
+    },
+    "./extension": {
+      "import": "./extension.mjs",
+      "require": "./extension.js",
+      "types": "./extension.d.ts"
+    },
+    "./chainLens": {
+      "import": "./chainLens.mjs",
+      "require": "./chainLens.js",
+      "types": "./chainLens.d.ts"
+    },
+    "./exchangeInfo": {
+      "import": "./exchangeInfo.mjs",
+      "require": "./exchangeInfo.js",
+      "types": "./exchangeInfo.d.ts"
+    },
+    "./royalties": {
+      "import": "./royalties.mjs",
+      "require": "./royalties.js",
+      "types": "./royalties.d.ts"
+    },
+    "./hashes": {
+      "import": "./hashes.mjs",
+      "require": "./hashes.js",
+      "types": "./hashes.d.ts"
+    },
+    "./sr25519": {
+      "import": "./sr25519.mjs",
+      "require": "./sr25519.js",
+      "types": "./sr25519.d.ts"
+    }
+  }
 }
