@@ -74,8 +74,8 @@ interface Signer {
 // Unique SDK types
 // =========================================
 export interface UNIQUE_SDK_UnsignedTxPayloadBody {
-  signerPayloadJSON: SignerPayloadJSON
-  signerPayloadRaw: SignerPayloadRaw
+  signerPayloadJSON?: SignerPayloadJSON
+  signerPayloadRaw?: SignerPayloadRaw
   signerPayloadHex: string
 }
 
@@ -285,11 +285,19 @@ const loadWalletByNameSafe = async (walletName: string): Promise<IPolkadotExtens
         const signer = {
           address,
           sign: async (unsignedTxPayload: UNIQUE_SDK_UnsignedTxPayloadBody): Promise<UNIQUE_SDK_SignTxResultResponse> => {
-            const signatureResult = await signPayload(unsignedTxPayload.signerPayloadJSON)
-            return {
-              signatureType: accountType,
-              signature: signatureResult.signature,
+            const signatureType = accountType
+
+            if (unsignedTxPayload.signerPayloadJSON) {
+              const {signature} = await signPayload(unsignedTxPayload.signerPayloadJSON)
+
+              return {signatureType, signature}
             }
+
+            const toSing = unsignedTxPayload.signerPayloadRaw || unsignedTxPayload.signerPayloadHex
+
+            const {signature} = await signRaw(toSing)
+
+            return {signatureType, signature}
           }
         }
 
