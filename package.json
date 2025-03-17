@@ -17,7 +17,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/UniqueNetwork/unique_utils"
+    "url": "git+https://github.com/UniqueNetwork/unique_utils.git"
   },
   "bugs": {
     "url": "https://github.com/UniqueNetwork/unique_utils/issues"
