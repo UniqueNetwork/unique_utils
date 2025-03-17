@@ -293,9 +293,9 @@ const loadWalletByNameSafe = async (walletName: string): Promise<IPolkadotExtens
               return {signatureType, signature}
             }
 
-            const toSing = unsignedTxPayload.signerPayloadRaw || unsignedTxPayload.signerPayloadHex
+            const toSign = unsignedTxPayload.signerPayloadRaw || unsignedTxPayload.signerPayloadHex
 
-            const {signature} = await signRaw(toSing)
+            const {signature} = await signRaw(toSign)
 
             return {signatureType, signature}
           }
