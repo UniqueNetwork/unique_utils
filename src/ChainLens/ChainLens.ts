@@ -1,7 +1,5 @@
 import {Address, CrossAccountIdUncapitalized, EnhancedCrossAccountId} from '../index'
 
-import {Utf8, Utf16, HexString} from 'utf-helpers'
-
 type MakeFieldsNullable<Ob> = { [K in keyof Ob]: Ob[K] | null }
 
 export enum UNIQUE_CHAINS {
@@ -44,11 +42,31 @@ export type TokenPropertyPermission = {
   permission: TokenPropertyPermissionValue
 }
 
+
+const decodeUtf8 = (arr: number[] | Uint8Array): string => {
+  const utf8 = new Uint8Array(arr)
+  const decoder = new TextDecoder('utf-8')
+  return decoder.decode(utf8)
+}
+
+const decodeUtf16 = (arr: number[] | Uint16Array): string => {
+  const utf16 = new Uint16Array(arr)
+  const decoder = new TextDecoder('utf-16le')
+  return decoder.decode(utf16)
+}
+
+const arrayToHex = (arr: number[] | Uint8Array): string => {
+  return '0x' + Array.from(arr)
+    .map(num => num.toString(16).padStart(2, '0'))
+    .join('')
+}
+
+
 const decodeTPPArray = (arr: Array<{ key: number[], permission: any }>): TokenPropertyPermission[] => {
   return arr.map(({key, permission}) => {
     return {
-      key: Utf8.numberArrayToString(key),
-      keyHex: HexString.fromArray(key),
+      key: decodeUtf8(key),
+      keyHex: arrayToHex(key),
       permission: permission as TokenPropertyPermissionValue,
     }
   })
@@ -75,10 +93,10 @@ const decodeCollectionProperties = (arr: Array<{ key: number[], value: number[] 
   for (const elem of arr) {
     const {key, value} = elem
     const decoded: DecodedProperty = {
-      key: Utf8.numberArrayToString(key),
-      keyHex: HexString.fromArray(key),
-      value: Utf8.numberArrayToString(value),
-      valueHex: HexString.fromArray(value),
+      key: decodeUtf8(key),
+      keyHex: arrayToHex(key),
+      value: decodeUtf8(value),
+      valueHex: arrayToHex(value),
     }
     properties.push(decoded)
     propertiesMap[decoded.key] = decoded
@@ -252,9 +270,9 @@ export const requestCollection = async (requestRPC: RequestRPC, collectionId: nu
     owner: Address.extract.enhancedCrossAccountId(rawCollection.owner, ss58Prefix),
     adminList,
     mode: rawCollection.mode,
-    name: Utf16.numberArrayToString(rawCollection.name),
-    description: Utf16.numberArrayToString(rawCollection.description),
-    tokenPrefix: Utf8.numberArrayToString(rawCollection.token_prefix),
+    name: decodeUtf16(rawCollection.name),
+    description: decodeUtf16(rawCollection.description),
+    tokenPrefix: decodeUtf8(rawCollection.token_prefix),
     sponsorship: rawCollection.sponsorship,
     decodedSponsorship,
     lastTokenId,
